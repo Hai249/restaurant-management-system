@@ -123,6 +123,12 @@ mục 7 để chủ module duyệt. File chung (`Program.cs`, `ModuleRegistratio
 
 ## 5. Bảng trạng thái công việc
 
+HIE-1.2 (kết quả cuối 14/11/2026): In Review (local implementation) — Codex/Hiếu, `feature/shared-foundation-hie-1-2`. Build Release 0 warning/error; Architecture 3/3; Integration 99/99, 0 skip trên SQL Server tạm, gồm bốn test C03 đã merge ở PR #28. Xem `docs/shared-foundation-handoff.md`. Chưa commit/push/PR/merge; chưa nghiệm thu staging. Dòng này thay thế trạng thái In Progress và kết quả timeout cũ bên dưới, không xóa lịch sử.
+
+HIE-1.2 (14/11/2026): In Progress — Codex thay mặt Hiếu trên `feature/shared-foundation-hie-1-2`. ADR-01 đã merge qua PR #29 và người phụ trách xác nhận đã duyệt; chỉ phần implementation cần kiểm chứng/bàn giao. Không yêu cầu duyệt lại quyết định ADR. Đang chạy hồi quy với test C03 đã merge từ PR #28; giữ nguyên thay đổi chưa commit, không commit/push/merge.
+
+HIE-1.2: In Progress — Codex thay mặt Hiếu trên `feature/shared-foundation-hie-1-2`, ngày 12/11/2026. ADR đề xuất và nền tảng additive đã viết; 13 test nền tảng và 3 test kiến trúc đạt. Lượt hồi quy cuối: Integration 92 đạt, 2 lỗi timeout SQL khi setup Identity, không skip. Chưa commit/push, chưa review Phương/Hải, không đánh dấu Done.
+
 HIE-1.3: In Review (cục bộ, chờ người dùng push/PR) — Codex thay mặt Hiếu trên `feature/identity-refresh-token`.
 
 ### HIE-1.3 PR conflict resolution
@@ -165,6 +171,12 @@ The prior note saying no commit/push is superseded by PR #24 (f9a905b).
 ---
 
 ## 6. Việc tiếp theo (hàng đợi)
+
+HIE-1.2 sau kiểm chứng: đồng bộ nhánh với develop (giữ mọi thay đổi chưa commit và ưu tiên ADR đã merge khi xử lý tài liệu), chạy lại runner rồi review/PR implementation. Kiểm thử cục bộ xanh không thay thế CI/review sau đồng bộ. Sau merge implementation mới chuyển HIE-1.4.
+
+Cập nhật 14/11/2026 cho Hiếu: hoàn tất kiểm chứng và PR implementation HIE-1.2; không làm lại ADR-01 hoặc refresh token (PR #26 đã merge). Sau đó HIE-1.4 (`RequirePermission`). Các hướng dẫn cũ bên dưới về ADR/refresh chưa merge đã lỗi thời.
+
+HIE-1.2: Hiếu đưa hướng dẫn phối hợp lên PR; Phương/Hải thực hiện trên máy riêng và gửi bằng chứng. Hiếu viết ADR-01 dựa trên code hiện tại và báo cáo, sau đó lấy review trước khi chốt nền tảng.
 
 PR #24: local conflict/CI repair verified; push updates and request Bao Anh review.
 Do not push directly to develop. Real SalesDay staging acceptance remains open.
@@ -308,6 +320,36 @@ dotnet test RestaurantManagement.slnx -c Release --no-build --no-restore
 - Kiểm tra: Compose nhận đủ sqlserver, api, web, nginx.
 - Chưa kiểm chứng: Docker build, khởi động lại stack và smoke test HTTPS trên VPS.
 - Tiếp theo: Commit, push, tạo Pull Request và review.
+
+### 2026-11-14 — Codex — HIE-1.2 implementation verification — thay mặt Hiếu
+
+- Nhánh: `feature/shared-foundation-hie-1-2`; giữ nguyên code dở dang, không commit/push/merge. ADR-01 đã merge PR #29 và người phụ trách xác nhận đã duyệt; không yêu cầu duyệt lại quyết định.
+- Bổ sung test helper: hủy trước khi lấy khóa, rollback nhả khóa, quyền sở hữu connection/transaction, timeout ngoài giới hạn và null arguments. Test kiến trúc kiểm tra FrameworkReference của SQL helper.
+- Bổ sung nguyên vẹn bốn test C03 từ `origin/develop`/PR #28; không sửa logic SalesDay. Thêm runner `scripts/Test-SharedFoundation.ps1` dùng SQL Server tạm chỉ mở loopback và tự dọn container.
+- Locked restore đạt; build Release 0 warning/error; kết quả cuối Architecture 3/3, Integration 99/99, failed=0, skipped=0. TRX tại `TestResults/FoundationCurrent/*2026-11-14_22_13_13*.trx`. Hai lượt trước khi thêm test upstream: 95/95 integration đạt.
+- Lỗi timeout migration Identity cũ không tái hiện; không thay code Identity hoặc tăng timeout test để che lỗi. Chưa kết luận nguyên nhân lịch sử.
+- `dotnet format whitespace RestaurantManagement.slnx --verify-no-changes --no-restore`, `git diff --check` và PowerShell AST parsing đạt. Container thử nghiệm đã dọn sạch.
+- Tự rà soát phạm vi theo ADR; chưa có review độc lập. Không thêm runtime consumer, API, migration, worker hoặc permission policy.
+- Bàn giao: `docs/shared-foundation-handoff.md`. In Review cục bộ; còn đồng bộ lịch sử nhánh với develop, CI/review/PR implementation. Chưa nghiệm thu staging.
+
+### 2026-11-12 — Codex — HIE-1.2 implementation proposal — thay mặt Hiếu
+
+- Nhánh feature/shared-foundation-hie-1-2; base develop 17244f5. Giữ hướng dẫn Phương/Hải đã tạo; chưa commit/push.
+- Soạn ADR-01, checklist review và kế hoạch. Tạo hai project shared thuần BCL, primitive lỗi/key/event, abstraction Outbox và helper khóa SQL theo ngày. Không đổi module nghiệp vụ hoặc API/migration hiện hữu.
+- Tăng cường test kiến trúc cho Contracts tùy chọn và đường dẫn reference. Module chưa được mở dependency mới khi không có consumer cụ thể.
+- Kiểm chứng: locked restore, whitespace verify, git diff --check đạt; Architecture 3/3; test foundation riêng 13/13, gồm hai SQL lock tests.
+- Lượt integration tổng cuối: 92 đạt, 2 thất bại, không skip; TRX verified trong TestResults/Foundation ghi SQL Execution Timeout ở InitializeAsync tạo/migrate DB của hai test Identity cũ. Chưa thể khẳng định regression toàn bộ đạt.
+- Đã sửa command timeout helper (tối thiểu 30s, tách khỏi app-lock timeout); sau sửa test helper riêng và cả hai test helper trong lượt tổng đạt.
+- Tiếp theo: chạy lại hồi quy trên SQL thử nghiệm ổn định; Phương review C03/idempotency, Hải review CI/vận hành; người dùng quyết định commit/push sau kiểm chứng. ADR vẫn Proposed, HIE-1.2 chưa Done.
+
+### 2026-11-12 — Codex — hướng dẫn phối hợp HIE-1.2 — thay mặt Hiếu
+
+- Nhánh: feature/shared-foundation-hie-1-2; chỉ sửa tài liệu, chưa commit/push.
+- Tạo docs/huong-dan-phuong-hai-adr01.md: nhiệm vụ, đầu ra, kiểm chứng SQL/CI, quy trình GitHub và tiêu chí nghiệm thu cho Phương/Hải trên máy riêng.
+- Đối chiếu với BusinessDays, test kiến trúc, script Test-PhuongWeek1, workflow backend/web và CONTRIBUTING tại develop 17244f5. SQL filter đã bao phủ SqlServer; không giao làm lại thay đổi đó.
+- Kiểm tra: git diff --check và kiểm tra đường dẫn tham chiếu. Không chạy test, Docker, database hoặc triển khai phần việc Phương/Hải trên máy này.
+- Giới hạn: hướng dẫn không phải ADR được duyệt; chưa xác nhận kết quả trên máy Phương/Hải hoặc run GitHub mới.
+- Tiếp theo: Hiếu chia sẻ tài liệu qua PR; hai thành viên nhận việc, ghi SHA/bằng chứng thực tế; Hiếu soạn ADR-01.
 
 ### 2026-11-11 — Codex — HIE-1.3 — thay mặt Hiếu
 
