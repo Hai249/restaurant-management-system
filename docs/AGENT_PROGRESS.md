@@ -123,6 +123,8 @@ mục 7 để chủ module duyệt. File chung (`Program.cs`, `ModuleRegistratio
 
 ## 5. Bảng trạng thái công việc
 
+HIE-1.4: In Progress — Codex thay mặt Hiếu trên `feature/identity-permission-policies`. 26 policy + RequirePermission; không Admin bypass; kiểm thử 401/403 theo vai trò.
+
 HIE-1.3: In Review (cục bộ, chờ người dùng push/PR) — Codex thay mặt Hiếu trên `feature/identity-refresh-token`.
 
 ### HIE-1.3 PR conflict resolution
@@ -417,3 +419,13 @@ dotnet test RestaurantManagement.slnx -c Release --no-build --no-restore
 - Chưa kiểm chứng: CI chưa chạy 4 test mới (chưa push); chưa đọc TRX SQL của CI run 43064234818 (job SQL success, artifact `identity-sql-test-results`); `dotnet format whitespace` chế độ solution chưa chạy trên máy Phương.
 - Việc tiếp theo: Phương commit đúng 3 file, push và mở draft PR vào `develop`. Hải xác nhận TRX CI có đủ 9 test, không skip (H2). Hiếu gửi PR ADR-01 để Phương review (P4).
 - Quyết định mới: không. Các chữ ký helper trong báo cáo chỉ là đề xuất cho ADR-01.
+
+### 2026-11-15 — Codex — HIE-1.4 permission policies
+
+- Branch feature/identity-permission-policies from develop 6db075c; no dependency on unmerged Foundation/proxy/Seating branches.
+- Added 26 BCL-only PermissionCodes in Identity.Application, reused exact values in seed without changing grants; Host registers authenticated permission claim policies and validates RequirePermission names. Preserved fallback auth and SystemAdministration. No Admin operational bypass, schema or package changes.
+- TDD: policy lookup was null before implementation. HTTP TestServer exercises production authorization/helper across all 26 permissions and five seeded roles (130 authenticated cases plus 26 anonymous); test-only authentication supplies principals, not production JWT validation. Existing real SQL authentication/session tests run separately in full regression.
+- Full real SQL regression: 87 integration + 2 architecture passed, zero skipped; Release 0 warnings/errors, locked restore passed. TRX TestResults/FoundationCurrent/67a8d9a2643840b8ab8b40acf761b59b. Full-solution whitespace passed. Release EF reports no pending Identity model changes. Final focused policy tests rerun after extra assertions.
+- Self-review: fail closed for unknown code and unauthenticated principal; exact seeded catalog equality, no implicit Admin grant, unchanged seed/schema and no unrelated artifacts. RequirePermission is a Host composition helper; module Presentation must not reference Host and can use registered policy names with RequireAuthorization. Independent reviewer required.
+- Previous Seating CI failure was generated migration BOM only; fixed edf7f1a after full formatter verification. PR #38 final push/PR CI success (43650939010 / 43650943788). Proxy PR #37 green; Foundation #36 still pending human review.
+- Next: PR to develop, Phuong/Hai review and final HEAD CI; verify all four feature branches together locally without merging shared branches. Staging acceptance/human approval remain separate gates.
