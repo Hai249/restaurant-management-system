@@ -3,7 +3,8 @@
 - Ngày: 12/11/2026. Chủ trì: Hiếu. Task: HIE-1.2.
 - Trạng thái: **Đã duyệt theo xác nhận của người phụ trách ngày 14/11/2026; tài liệu đã merge vào develop qua PR #29.**
 - Phạm vi xác nhận: quyết định ADR; không đồng nghĩa implementation đã merge hoặc đã nghiệm thu. Các ghi chú chờ review bên dưới là nội dung lịch sử của bản đề xuất.
-- Mốc mã nguồn: develop 17244f5. Không thay đổi phạm vi MVP.
+- Mốc phân tích ban đầu: develop 17244f5; nhánh tài liệu tách từ develop 1333e67.
+- PR #29 chỉ chứa tài liệu ADR; code HIE-1.2 được review trong PR implementation riêng.
 
 ## Bối cảnh và vấn đề
 
@@ -136,6 +137,8 @@ chỉ thêm project/helper chưa được sử dụng; không có downgrade data
 
 ## 8. Review và câu hỏi cần trả lời
 
+Ghi chú lịch sử của bản đề xuất đã merge ở PR #29 được giữ bên dưới. Trạng thái hiện tại ở đầu tài liệu; review code implementation là bước riêng.
+
 | Người | Nội dung | Trạng thái |
 |---|---|---|
 | Phương | Namespace khóa, thứ tự khóa, idempotency và tính nguyên tử C03 | Chờ review |
@@ -143,4 +146,10 @@ chỉ thêm project/helper chưa được sử dụng; không có downgrade data
 | Hiếu | Ranh giới Contracts, scope triển khai và test kiến trúc | Đề xuất |
 
 Chưa có quyết định tự động chuyển sang Accepted. Link PR/review và SHA được duyệt
-phải bổ sung khi có. Báo cáo phối hợp theo `../huong-dan-phuong-hai-adr01.md`.
+phải bổ sung khi có. Phương review nghiệp vụ/khóa/giao dịch; Hải review CI và vận hành.
+Báo cáo chuẩn bị của Phương nằm ở PR #28, chưa thay thế review chính ADR này.
+
+Các điểm cần chốt trước Accepted: khóa cố định hay theo ngày; isolation level và
+đọc lại trạng thái sau khóa; không nâng Shared lên Exclusive khi chốt; ánh xạ
+lỗi timeout tại API; replay SalesDay trả trạng thái hiện tại và không lưu yêu cầu
+thất bại. Bản tài liệu này không tuyên bố toàn bộ test hoặc nghiệm thu đã đạt.

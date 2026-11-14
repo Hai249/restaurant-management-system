@@ -123,6 +123,8 @@ mục 7 để chủ module duyệt. File chung (`Program.cs`, `ModuleRegistratio
 
 ## 5. Bảng trạng thái công việc
 
+HIE-1.2 (review/GitHub 14/11/2026): In Review — Codex/Hiếu, `feature/shared-foundation-hie-1-2`. Commit implementation `ad4c42d`; đã xử lý xung đột ADR khi đồng bộ develop `6db075c`, không đổi quyết định kiến trúc. Hồi quy sau đồng bộ: 3/3 kiến trúc, 99/99 integration, 0 skip; restore/build/format đạt. Chuẩn bị push feature và PR vào develop, yêu cầu Phương/Hải review code; không tự merge. Dòng này thay thế trạng thái chưa commit/chưa đồng bộ bên dưới; giữ nguyên nhật ký lịch sử.
+
 HIE-1.2 (kết quả cuối 14/11/2026): In Review (local implementation) — Codex/Hiếu, `feature/shared-foundation-hie-1-2`. Build Release 0 warning/error; Architecture 3/3; Integration 99/99, 0 skip trên SQL Server tạm, gồm bốn test C03 đã merge ở PR #28. Xem `docs/shared-foundation-handoff.md`. Chưa commit/push/PR/merge; chưa nghiệm thu staging. Dòng này thay thế trạng thái In Progress và kết quả timeout cũ bên dưới, không xóa lịch sử.
 
 HIE-1.2 (14/11/2026): In Progress — Codex thay mặt Hiếu trên `feature/shared-foundation-hie-1-2`. ADR-01 đã merge qua PR #29 và người phụ trách xác nhận đã duyệt; chỉ phần implementation cần kiểm chứng/bàn giao. Không yêu cầu duyệt lại quyết định ADR. Đang chạy hồi quy với test C03 đã merge từ PR #28; giữ nguyên thay đổi chưa commit, không commit/push/merge.
@@ -158,6 +160,7 @@ Việc tiếp theo: người dùng push nhánh, mở PR vào develop, Phương r
 | DUY-1.1/1.2/1.3 | Realtime/âm thanh, thành phần vận hành, màn mở ngày     | Duy         | —      | In Review   | PR #17 `feature/duy-week-one`                                                                                 | Đang mở; sửa file cấu hình của Bảo Anh nên cần Bảo Anh duyệt; màn mở ngày làm trên mock                                      |
 | (nền)           | Viết kế hoạch 7 tuần                                    | Người duyệt | Claude | In Review   | chưa commit                                                                                                   | `docs/phan-cong-chi-tiet-7-tuan.md`; chờ người duyệt xác nhận mục 11 của file đó                                             |
 | HAI-1.2b        | Sửa thứ tự khởi động Nginx HTTPS                        | Hải         | Hải    | In Progress | fix/hai-staging-startup                                                                                       | Đã thêm depends_on cho api/web; Compose config --quiet đạt; chưa thử khởi động lại stack trên VPS                            |
+| HIE-1.2 (Phương) | Review ADR-01 P1–P4: bản đồ idempotency/mã lỗi/khóa, bằng chứng C03 | Phương | Claude | In Progress | `docs/phuong-adr01-review` (từ `develop` 17244f5, chưa push) | `docs/reviews/adr01-phuong.md` + 4 test SQL mới; 9/9 đạt 1 + 20 lượt trên SQL Server thật máy Phương; chờ CI (Hải) và PR ADR-01 (Hiếu) |
 
 | DUY-1.3-CI | Resolve PR conflicts and repair web CI | Duy | Codex | In Review | feature/duy-baoanh-integration / PR #24 | Local checks passed; waiting for remote CI and reviewer |
 
@@ -171,6 +174,8 @@ The prior note saying no commit/push is superseded by PR #24 (f9a905b).
 ---
 
 ## 6. Việc tiếp theo (hàng đợi)
+
+HIE-1.2 sau review: đẩy nhánh feature và mở PR implementation vào develop, theo dõi Backend CI và nhờ `phuongdtrai`/`Hai249` review. Chỉ squash merge khi CI đạt và có review thành viên khác; không đẩy thẳng develop/main.
 
 HIE-1.2 sau kiểm chứng: đồng bộ nhánh với develop (giữ mọi thay đổi chưa commit và ưu tiên ADR đã merge khi xử lý tài liệu), chạy lại runner rồi review/PR implementation. Kiểm thử cục bộ xanh không thay thế CI/review sau đồng bộ. Sau merge implementation mới chuyển HIE-1.4.
 
@@ -447,3 +452,23 @@ dotnet test RestaurantManagement.slnx -c Release --no-build --no-restore
 - Kiểm tra: Compose nhận đủ sqlserver, api, web, nginx.
 - Chưa kiểm chứng: Docker build, khởi động lại stack và smoke test HTTPS trên VPS.
 - Tiếp theo: Commit, push, tạo Pull Request và review.
+
+### 2026-11-12 01:35 — Claude — HIE-1.2 (phần Phương: P1–P4) — thay mặt Phương
+
+- Nhánh / PR: `docs/phuong-adr01-review` từ `origin/develop` `17244f5` trên máy Phương; chưa commit, chưa push, chưa có PR.
+- Đã làm: theo hướng dẫn "Phương và Hải phối hợp hoàn thành HIE-1.2 / ADR-01", viết `docs/reviews/adr01-phuong.md` (bản đồ idempotency, mã lỗi, khóa ngày, transaction hai DbContext có tham chiếu file/dòng; đề xuất Giữ nguyên / Có thể dùng chung / Chưa đủ bằng chứng; review Outbox ở mức nguyên tử; checklist P4).
+- Thêm 4 test vào `PhuongWeekOneSqlServerTests`: replay/conflict tất định (kể cả khác người mở), 5 retry đồng thời cùng khóa, Exclusive thật sự chờ rồi được cấp (mã 1), lỗi ở module thứ hai làm rollback cả hai. Tổng kỳ vọng: 9 test.
+- File chính đã sửa: `docs/reviews/adr01-phuong.md` (mới), `tests/Restaurant.IntegrationTests/PhuongWeekOneSqlServerTests.cs`, file này.
+- Lệnh đã chạy trên máy Phương (Windows, SDK 10.0.302, Docker 29.7.2, `mssql/server:2022-latest`): `scripts/Test-PhuongWeek1.ps1` 1 lượt rồi 20 lượt tuần tự qua `TestResults/PhuongAdr01/run-adr01-p2.ps1` (gitignore). Lượt đơn: build Release 0 warning/0 error, 9 passed, 0 failed, 0 notExecuted. 20/20 lượt exit 0, mỗi TRX 9/9. `git diff --check` đạt; `dotnet format whitespace --folder --verify-no-changes` cho file test đạt.
+- Chưa kiểm chứng: CI chưa chạy 4 test mới (chưa push); chưa đọc TRX SQL của CI run 43064234818 (job SQL success, artifact `identity-sql-test-results`); `dotnet format whitespace` chế độ solution chưa chạy trên máy Phương.
+- Việc tiếp theo: Phương commit đúng 3 file, push và mở draft PR vào `develop`. Hải xác nhận TRX CI có đủ 9 test, không skip (H2). Hiếu gửi PR ADR-01 để Phương review (P4).
+- Quyết định mới: không. Các chữ ký helper trong báo cáo chỉ là đề xuất cho ADR-01.
+
+### 2026-11-14 — Codex — HIE-1.2 review và chuẩn bị PR GitHub — thay mặt Hiếu
+
+- Người dùng cho phép review, commit, push và PR. Self-review không thay thế review độc lập. Đã xác minh tài khoản reviewer từ collaborators của repo.
+- Review không phát hiện lỗi runtime chặn PR; đã sửa runner để yêu cầu hai TRX mới, total > 0, passed = total và zero failed/skipped. Thêm báo cáo `docs/reviews/shared-foundation-implementation.md`.
+- Đã tạo commit `ad4c42d` trên feature; đồng bộ origin/develop `6db075c`, giữ nội dung ADR đã merge và toàn bộ nhật ký. Xung đột duy nhất là add/add ADR. Không thay đổi nhánh chung.
+- Kiểm chứng sau đồng bộ: locked restore đạt; build Release 0 warning/error; Architecture 3/3, Integration 99/99, zero skip. TRX `TestResults/FoundationCurrent/52c13de116e1441888115392977f9f52/*.trx`. Format verify đạt. Không sửa API, migration hoặc runtime Identity để làm xanh test.
+- Giữ stash dự phòng HIE-1.2 trước đồng bộ và stash HIE-1.3 cũ; không xóa. Không đẩy artifact hoặc bí mật.
+- Cổng còn lại: push feature, PR vào develop, CI trên GitHub và review Phương/Hải. Không tự approve, merge hoặc deploy staging.
