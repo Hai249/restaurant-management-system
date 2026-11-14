@@ -123,7 +123,7 @@ mục 7 để chủ module duyệt. File chung (`Program.cs`, `ModuleRegistratio
 
 ## 5. Bảng trạng thái công việc
 
-HIE-1.5b / HAI-1.5: In Progress — Codex thay mặt Hiếu trên `feature/identity-forwarded-headers`. Chỉ tin proxy cấu hình, kiểm thử IP rate limit và spoofing; Hải review hạ tầng và nghiệm thu staging.
+HIE-1.5b / HAI-1.5: In Review — Codex thay mặt Hiếu trên `feature/identity-forwarded-headers`, PR #37 vào develop. Chỉ tin proxy cấu hình; 10/10 proxy tests đạt. Hải review hạ tầng và nghiệm thu staging; chưa merge.
 
 HIE-1.3: In Review (cục bộ, chờ người dùng push/PR) — Codex thay mặt Hiếu trên `feature/identity-refresh-token`.
 
