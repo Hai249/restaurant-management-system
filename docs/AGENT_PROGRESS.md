@@ -123,6 +123,8 @@ mục 7 để chủ module duyệt. File chung (`Program.cs`, `ModuleRegistratio
 
 ## 5. Bảng trạng thái công việc
 
+HIE-1.5b / HAI-1.5: In Progress — Codex thay mặt Hiếu trên `feature/identity-forwarded-headers`. Chỉ tin proxy cấu hình, kiểm thử IP rate limit và spoofing; Hải review hạ tầng và nghiệm thu staging.
+
 HIE-1.3: In Review (cục bộ, chờ người dùng push/PR) — Codex thay mặt Hiếu trên `feature/identity-refresh-token`.
 
 ### HIE-1.3 PR conflict resolution
@@ -417,3 +419,12 @@ dotnet test RestaurantManagement.slnx -c Release --no-build --no-restore
 - Chưa kiểm chứng: CI chưa chạy 4 test mới (chưa push); chưa đọc TRX SQL của CI run 43064234818 (job SQL success, artifact `identity-sql-test-results`); `dotnet format whitespace` chế độ solution chưa chạy trên máy Phương.
 - Việc tiếp theo: Phương commit đúng 3 file, push và mở draft PR vào `develop`. Hải xác nhận TRX CI có đủ 9 test, không skip (H2). Hiếu gửi PR ADR-01 để Phương review (P4).
 - Quyết định mới: không. Các chữ ký helper trong báo cáo chỉ là đề xuất cho ADR-01.
+
+### 2026-11-15 — Codex — HIE-1.5b / HAI-1.5 trusted forwarded headers
+
+- Branch: `feature/identity-forwarded-headers` from develop `6db075c`; Foundation PR #36 remains open, independent review pending.
+- Implemented exact configured proxy trust, one-hop/symmetric headers before HTTPS and rate limiting. No configuration means forwarding disabled; malformed IP fails startup. Nginx overwrites inbound X-Forwarded-For; Compose fixes its internal IP, API has no host port.
+- Self-review: checked trust defaults, spoofing, middleware order, IPv4 topology, unrelated files and no secrets/artifacts. No independent reviewer available locally; request Hai249 on PR.
+- Verified: locked restore; Release build 0 warnings/errors; real SQL regression 93 integration + 2 architecture, zero failures/skips (TRX `TestResults/FoundationCurrent/9167e064e8fa4b7ab24dbecf233e5781`). Added edge cases afterwards: 10/10 proxy tests passed; scoped whitespace format passed. Compose merged backend/frontend/HTTPS config parsed successfully.
+- Deployment gate: Hai must check subnet overlap and override INTERNAL_SUBNET + NGINX_INTERNAL_IP together, recreate the internal network without removing SQL volumes, deploy, and verify two real client IPs behind HTTPS. Roll back image/Compose together. Not deployed or accepted on staging.
+- Next: PR to develop with Hai infrastructure review; then HIE-1.5 Seating, then HIE-1.4 permission policies. Do not self-approve/merge.
