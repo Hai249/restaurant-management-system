@@ -123,6 +123,8 @@ mục 7 để chủ module duyệt. File chung (`Program.cs`, `ModuleRegistratio
 
 ## 5. Bảng trạng thái công việc
 
+HIE-1.2 (GitHub PR #36): In Review — `feature/shared-foundation-hie-1-2` → develop. Đã push implementation `fd5ef01`, PR không xung đột, yêu cầu review `phuongdtrai` và `Hai249`, auto-merge tắt. CI push/PR đạt; artifact SQL run `43615894018` xác nhận 43/43, 0 skip, gồm 3 test helper khóa ngày. Hồi quy cục bộ 99/99 integration và 3/3 kiến trúc. Còn review độc lập; không đánh dấu Done, không tự merge/deploy. Các trạng thái chuẩn bị push bên dưới là lịch sử.
+
 HIE-1.2 (review/GitHub 14/11/2026): In Review — Codex/Hiếu, `feature/shared-foundation-hie-1-2`. Commit implementation `ad4c42d`; đã xử lý xung đột ADR khi đồng bộ develop `6db075c`, không đổi quyết định kiến trúc. Hồi quy sau đồng bộ: 3/3 kiến trúc, 99/99 integration, 0 skip; restore/build/format đạt. Chuẩn bị push feature và PR vào develop, yêu cầu Phương/Hải review code; không tự merge. Dòng này thay thế trạng thái chưa commit/chưa đồng bộ bên dưới; giữ nguyên nhật ký lịch sử.
 
 HIE-1.2 (kết quả cuối 14/11/2026): In Review (local implementation) — Codex/Hiếu, `feature/shared-foundation-hie-1-2`. Build Release 0 warning/error; Architecture 3/3; Integration 99/99, 0 skip trên SQL Server tạm, gồm bốn test C03 đã merge ở PR #28. Xem `docs/shared-foundation-handoff.md`. Chưa commit/push/PR/merge; chưa nghiệm thu staging. Dòng này thay thế trạng thái In Progress và kết quả timeout cũ bên dưới, không xóa lịch sử.
@@ -174,6 +176,8 @@ The prior note saying no commit/push is superseded by PR #24 (f9a905b).
 ---
 
 ## 6. Việc tiếp theo (hàng đợi)
+
+HIE-1.2 hiện tại: Phương/Hải review PR #36 và phản hồi implementation. Giữ CI xanh trên HEAD cuối; squash merge sau approval theo CONTRIBUTING.md. Agent không tự approve/merge. Sau merge mới chuyển HIE-1.4.
 
 HIE-1.2 sau review: đẩy nhánh feature và mở PR implementation vào develop, theo dõi Backend CI và nhờ `phuongdtrai`/`Hai249` review. Chỉ squash merge khi CI đạt và có review thành viên khác; không đẩy thẳng develop/main.
 
@@ -472,3 +476,9 @@ dotnet test RestaurantManagement.slnx -c Release --no-build --no-restore
 - Kiểm chứng sau đồng bộ: locked restore đạt; build Release 0 warning/error; Architecture 3/3, Integration 99/99, zero skip. TRX `TestResults/FoundationCurrent/52c13de116e1441888115392977f9f52/*.trx`. Format verify đạt. Không sửa API, migration hoặc runtime Identity để làm xanh test.
 - Giữ stash dự phòng HIE-1.2 trước đồng bộ và stash HIE-1.3 cũ; không xóa. Không đẩy artifact hoặc bí mật.
 - Cổng còn lại: push feature, PR vào develop, CI trên GitHub và review Phương/Hải. Không tự approve, merge hoặc deploy staging.
+
+### 2026-11-14 — Codex — HIE-1.2 PR #36 đã mở, CI đã xác minh
+
+- Đã push nhánh feature, mở PR #36 vào develop và yêu cầu `phuongdtrai`, `Hai249` review. HEAD implementation `fd5ef01`. PR mergeable, auto-merge tắt; chưa có approval độc lập và chưa merge.
+- CI push và pull_request đạt. Đọc artifact SQL run `43615894018` trong bộ nhớ: 43 passed / 0 failed / 0 skipped; cả 3 `BusinessDayLockSqlServerTests` được thực thi và Passed. Build and test job cũng success.
+- Bản cập nhật bàn giao này chỉ sửa tài liệu; tiếp tục kiểm tra CI trên HEAD PR cuối. Bảo toàn stash dự phòng và không deploy staging.

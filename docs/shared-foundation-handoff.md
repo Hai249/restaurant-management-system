@@ -1,6 +1,9 @@
 # HIE-1.2 implementation handoff (2026-11-14)
 
-Status: implementation committed, synchronized with develop and locally verified; ready for PR review.
+Status: PR #36 open into develop; implementation synchronized and locally verified.
+Requested reviewers: phuongdtrai (Phuong) and Hai249 (Hai). Auto-merge is disabled.
+Implementation HEAD fd5ef01 passed push and pull-request CI; this handoff update
+is documentation only and must retain green CI on the final PR head.
 ADR-01 was merged in PR #29 and the owner confirmed approval. This is not a
 request to approve the architecture again; implementation still needs review.
 
@@ -26,6 +29,10 @@ request to approve the architecture again; implementation still needs review.
 - Historical Identity migration timeouts did not reproduce; no Identity runtime
   changes or timeout increases were needed. This does not establish a historical root cause.
 - Format verification and git diff checks are recorded in the ledger.
+- GitHub PR Backend CI run 43615894018: Build and test success; Identity SQL
+  Server tests success. Downloaded SQL artifact was parsed in memory: 43/43
+  passed, zero failed/skipped, including all three BusinessDayLockSqlServerTests.
+  This is separate from the 99-test local full integration result.
 
 ## Git and review boundary
 
@@ -38,8 +45,9 @@ PhuongWeekOneSqlServerTests.cs. Local verification is not a remote CI result
 or independent reviewer approval. The pre-sync safety stash remains available.
 
 The synchronized tree passed the zero-skip SQL runner and format verification.
-Push only the feature branch, open a PR into develop and request teammate review.
-Do not merge until required CI and reviewer gates are satisfied.
+PR #36 is open on the feature branch; wait for independent implementation review.
+Do not merge until required CI and reviewer gates are satisfied; squash merge
+per CONTRIBUTING.md. No develop/main push, self-approval or auto-merge was used.
 No staging acceptance, frontend revalidation or production deployment was done.
 
 ## Repeat
