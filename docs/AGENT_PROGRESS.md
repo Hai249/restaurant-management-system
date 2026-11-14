@@ -123,6 +123,8 @@ mục 7 để chủ module duyệt. File chung (`Program.cs`, `ModuleRegistratio
 
 ## 5. Bảng trạng thái công việc
 
+HIE-1.5: In Progress — Codex thay mặt Hiếu trên `feature/seating-initial`. Entity + InitialSeating; C03/C05 theo quyết định mục 3; không thêm API tuần 2.
+
 HIE-1.3: In Review (cục bộ, chờ người dùng push/PR) — Codex thay mặt Hiếu trên `feature/identity-refresh-token`.
 
 ### HIE-1.3 PR conflict resolution
@@ -417,3 +419,13 @@ dotnet test RestaurantManagement.slnx -c Release --no-build --no-restore
 - Chưa kiểm chứng: CI chưa chạy 4 test mới (chưa push); chưa đọc TRX SQL của CI run 43064234818 (job SQL success, artifact `identity-sql-test-results`); `dotnet format whitespace` chế độ solution chưa chạy trên máy Phương.
 - Việc tiếp theo: Phương commit đúng 3 file, push và mở draft PR vào `develop`. Hải xác nhận TRX CI có đủ 9 test, không skip (H2). Hiếu gửi PR ADR-01 để Phương review (P4).
 - Quyết định mới: không. Các chữ ký helper trong báo cáo chỉ là đề xuất cho ADR-01.
+
+### 2026-11-15 — Codex — HIE-1.5 InitialSeating
+
+- Branch: feature/seating-initial from develop 6db075c; C03/C05 approval recorded in section 3. No Foundation/proxy commits included. Proxy PR #37 final HEAD da27224 has green push + PR CI, Hai249 review requested.
+- Five seating entities, module-local NO ACTION FKs, named checks/indexes, rowversion, hashed guest grants, filtered unique active occupancy; generated InitialSeating + snapshot. NgayBanId is Guid to match current SalesDay, not the outdated logical default. No API or cross-module FK added.
+- TDD: empty-model test failed before implementation. Final real SQL regression: 92 integration + 2 architecture, zero failed/skipped; Release 0 warnings/errors; locked restore passed. TRX: TestResults/FoundationCurrent/60001a7838f5451bb3ff19ac1cecfc93. Covers concurrent occupancy, reopen after close, transfer grant binding/history, stale EF writes, migration reapply/down/up.
+- Scoped whitespace passed; Release EF has-pending-model-changes reports none. An earlier no-build Debug check used pre-migration assembly; corrected to the verified Release build, no schema workaround.
+- Self-review before push: checked actual SalesDay key, filtered uniqueness, FK deletion/rollback order, token hash size, concurrency and explicit file scope. Human review remains required.
+- Deployment: Hai applies only SeatingDbContext migration after review/backup. Never run Down on operational data; rollback schema only on empty/new deployment or restore reviewed backup. No staging migration executed. Guest token revocation and atomic transfer API belong to week 2, not claimed implemented here.
+- Next: PR to develop, Phuong/Hai review and CI; then HIE-1.4 permission policies. Do not self-approve/merge.
