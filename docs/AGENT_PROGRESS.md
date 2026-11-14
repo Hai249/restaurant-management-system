@@ -123,7 +123,9 @@ mục 7 để chủ module duyệt. File chung (`Program.cs`, `ModuleRegistratio
 
 ## 5. Bảng trạng thái công việc
 
-HIE-1.4: In Progress — Codex thay mặt Hiếu trên `feature/identity-permission-policies`. 26 policy + RequirePermission; không Admin bypass; kiểm thử 401/403 theo vai trò.
+HIE-1.4: In Review — Codex/Hiếu, `feature/identity-permission-policies`, PR #39 vào develop, Phương/Hải review. 26 policy + RequirePermission; code/CI đạt, chưa merge.
+
+Tuần 1 Hiếu (15/11): Foundation #36, proxy #37, Seating #38, permission #39 đều In Review. Không còn task code Hiếu chưa triển khai trong phạm vi đã đối chiếu; còn approval/merge và nghiệm thu staging. Bản ghép local: 118 integration + 3 architecture, zero skip; frontend 43/43 và TypeScript đạt.
 
 HIE-1.3: In Review (cục bộ, chờ người dùng push/PR) — Codex thay mặt Hiếu trên `feature/identity-refresh-token`.
 
@@ -168,6 +170,8 @@ The prior note saying no commit/push is superseded by PR #24 (f9a905b).
 ---
 
 ## 6. Việc tiếp theo (hàng đợi)
+
+Ưu tiên hiện tại (15/11/2026): review/merge PR #36–#39 sau CI, giữ toàn bộ nhật ký khi xử lý xung đột tài liệu; Hải nghiệm thu proxy hai IP thật và apply Seating migration có backup. Không làm lại ADR-01/refresh; không tự merge hay đánh dấu staging đã đạt. Các hướng dẫn cũ bên dưới chỉ là lịch sử.
 
 PR #24: local conflict/CI repair verified; push updates and request Bao Anh review.
 Do not push directly to develop. Real SalesDay staging acceptance remains open.
@@ -429,3 +433,12 @@ dotnet test RestaurantManagement.slnx -c Release --no-build --no-restore
 - Self-review: fail closed for unknown code and unauthenticated principal; exact seeded catalog equality, no implicit Admin grant, unchanged seed/schema and no unrelated artifacts. RequirePermission is a Host composition helper; module Presentation must not reference Host and can use registered policy names with RequireAuthorization. Independent reviewer required.
 - Previous Seating CI failure was generated migration BOM only; fixed edf7f1a after full formatter verification. PR #38 final push/PR CI success (43650939010 / 43650943788). Proxy PR #37 green; Foundation #36 still pending human review.
 - Next: PR to develop, Phuong/Hai review and final HEAD CI; verify all four feature branches together locally without merging shared branches. Staging acceptance/human approval remain separate gates.
+
+### 2026-11-15 — Codex — Week-one final integration evidence
+
+- Completed sequential coding for HIE-1.5b/HAI-1.5 (PR #37), HIE-1.5 (PR #38), HIE-1.4 (PR #39); Foundation remains PR #36. All target develop, independent review requested, no auto-merge, no staging deployment. These are In Review, not Done.
+- Local-only branch chore/week-one-local-verification at 0d5558b combines #36/#37/#38/#39. Only AGENT_PROGRESS conflicted; preserved all sides. No runtime source conflict. This integration branch was not pushed and does not change develop/main.
+- Combined locked restore and Release build passed with zero warnings/errors; full-solution whitespace passed; SQL integration 118/118 and architecture 3/3, zero skipped. Evidence TestResults/FoundationCurrent/8dc70f07357f413b93102d7f99f3b898. Frontend npm test: 43/43; tsc --noEmit --incremental false exit 0. No frontend file changes.
+- GitHub CI verified on implementation heads for all four PRs: push + pull_request success. SQL TRX artifacts read in memory: #37 40/40, #38 47/47 (all 7 Seating cases), #39 40/40, zero failed/skipped. Final documentation commit CI is checked separately after push.
+- Reviewed explicit files before every implementation push; no secrets, TestResults, build output, node_modules, unnecessary lockfiles or unrelated files staged. Existing backup stashes retained; workspace returned to feature/identity-permission-policies.
+- Remaining human gates: Phuong/Hai approve, squash merge through PRs, preserve all journal sections during docs conflict resolution, then Hai apply reviewed Seating migration and verify HTTPS/two real IP rate limits on staging. Code/CI completion is not staging acceptance. No remaining unimplemented Hieu week-one coding task found in the verified scope; other owners' tasks are not claimed complete.
