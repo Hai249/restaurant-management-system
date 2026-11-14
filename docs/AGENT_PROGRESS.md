@@ -123,7 +123,7 @@ mục 7 để chủ module duyệt. File chung (`Program.cs`, `ModuleRegistratio
 
 ## 5. Bảng trạng thái công việc
 
-HIE-1.5: In Progress — Codex thay mặt Hiếu trên `feature/seating-initial`. Entity + InitialSeating; C03/C05 theo quyết định mục 3; không thêm API tuần 2.
+HIE-1.5: In Review — Codex thay mặt Hiếu trên `feature/seating-initial`, PR #38 vào develop, Phương/Hải review. SQL: 92 integration + 2 architecture passed, zero skip; chưa merge/apply staging.
 
 HIE-1.3: In Review (cục bộ, chờ người dùng push/PR) — Codex thay mặt Hiếu trên `feature/identity-refresh-token`.
 
