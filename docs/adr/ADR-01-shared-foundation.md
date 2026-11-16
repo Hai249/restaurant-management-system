@@ -1,9 +1,10 @@
 # ADR-01: Contracts và nền tảng dùng chung
 
 - Ngày: 12/11/2026. Chủ trì: Hiếu. Task: HIE-1.2.
-- Trạng thái: **Đề xuất, chờ Phương và Hải review. Không phải quyết định đã được nhóm duyệt.**
+- Trạng thái: **Đã duyệt theo xác nhận của người phụ trách ngày 14/11/2026; tài liệu đã merge vào develop qua PR #29.**
+- Phạm vi xác nhận: quyết định ADR; không đồng nghĩa implementation đã merge hoặc đã nghiệm thu. Các ghi chú chờ review bên dưới là nội dung lịch sử của bản đề xuất.
 - Mốc phân tích ban đầu: develop 17244f5; nhánh tài liệu tách từ develop 1333e67.
-- PR này chỉ chứa ADR đề xuất; không kèm code HIE-1.2 hoặc tài liệu hướng dẫn.
+- PR #29 chỉ chứa tài liệu ADR; code HIE-1.2 được review trong PR implementation riêng.
 
 ## Bối cảnh và vấn đề
 
@@ -107,7 +108,7 @@ phải có project thứ năm.
 
 ## 6. Tương thích và rollout
 
-Bản triển khai thử chưa commit ở nhánh cục bộ `feature/shared-foundation-hie-1-2` tạo `src/Shared/Restaurant.Shared.Contracts`
+Bản triển khai thử trên nhánh này tạo `src/Shared/Restaurant.Shared.Contracts`
 (BusinessError, IdempotencyKeys, IntegrationEvent và IOutboxWriter) và
 `src/Shared/Restaurant.Shared.SqlServer` (BusinessDayLock). Cả hai chỉ dùng BCL;
 helper nhận DbConnection/DbTransaction nhưng SQL thực thi dành riêng SQL Server.
@@ -135,6 +136,8 @@ chỉ thêm project/helper chưa được sử dụng; không có downgrade data
 - Không suy ra staging đạt từ unit test; không tính test skip là đã nghiệm thu.
 
 ## 8. Review và câu hỏi cần trả lời
+
+Ghi chú lịch sử của bản đề xuất đã merge ở PR #29 được giữ bên dưới. Trạng thái hiện tại ở đầu tài liệu; review code implementation là bước riêng.
 
 | Người | Nội dung | Trạng thái |
 |---|---|---|
