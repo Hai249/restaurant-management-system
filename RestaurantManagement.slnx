@@ -1,4 +1,5 @@
 <Solution>
+  <Folder Name="/src/" />
   <Folder Name="/src/Host/">
     <Project Path="src/Host/Restaurant.Api/Restaurant.Api.csproj" />
   </Folder>
@@ -50,6 +51,7 @@
     <Project Path="src/Modules/SalesDay/Restaurant.Modules.SalesDay.Infrastructure/Restaurant.Modules.SalesDay.Infrastructure.csproj" />
     <Project Path="src/Modules/SalesDay/Restaurant.Modules.SalesDay.Presentation/Restaurant.Modules.SalesDay.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/" />
   <Folder Name="/src/Modules/Audit/">
     <Project Path="src/Modules/Audit/Restaurant.Modules.Audit.Domain/Restaurant.Modules.Audit.Domain.csproj" />
     <Project Path="src/Modules/Audit/Restaurant.Modules.Audit.Application/Restaurant.Modules.Audit.Application.csproj" />
@@ -61,6 +63,10 @@
     <Project Path="src/Modules/Reporting/Restaurant.Modules.Reporting.Application/Restaurant.Modules.Reporting.Application.csproj" />
     <Project Path="src/Modules/Reporting/Restaurant.Modules.Reporting.Infrastructure/Restaurant.Modules.Reporting.Infrastructure.csproj" />
     <Project Path="src/Modules/Reporting/Restaurant.Modules.Reporting.Presentation/Restaurant.Modules.Reporting.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/Restaurant.Shared.Contracts/Restaurant.Shared.Contracts.csproj" />
+    <Project Path="src/Shared/Restaurant.Shared.SqlServer/Restaurant.Shared.SqlServer.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Restaurant.ArchitectureTests/Restaurant.ArchitectureTests.csproj" />

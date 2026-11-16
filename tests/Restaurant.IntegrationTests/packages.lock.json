@@ -893,6 +893,12 @@
           "Restaurant.Modules.Seating.Application": "[1.0.0, )"
         }
       },
+      "restaurant.shared.contracts": {
+        "type": "Project"
+      },
+      "restaurant.shared.sqlserver": {
+        "type": "Project"
+      },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "CentralTransitive",
         "requested": "[10.0.8, )",
