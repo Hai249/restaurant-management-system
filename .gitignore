@@ -28,3 +28,8 @@ Thumbs.db
 infra/certbot/
 infra/.env
 infra/nginx/*.bak
+
+# Local AI-agent files - kept on disk, never commit (avoids PR conflicts)
+AGENTS.md
+CLAUDE.md
+docs/AGENT_PROGRESS.md
