@@ -17,6 +17,15 @@ public sealed class DependencyTests
         var root = FindRoot();
         foreach (var module in Modules)
         {
+            var contractsPath = Path.Combine(root, "src", "Modules", module,
+                $"Restaurant.Modules.{module}.Contracts", $"Restaurant.Modules.{module}.Contracts.csproj");
+            if (File.Exists(contractsPath))
+            {
+                var contracts = XDocument.Load(contractsPath);
+                Assert.Empty(contracts.Descendants("ProjectReference"));
+                Assert.Empty(contracts.Descendants("PackageReference"));
+                Assert.Empty(contracts.Descendants("FrameworkReference"));
+            }
             foreach (var layer in new[] { "Domain", "Application", "Infrastructure", "Presentation" })
             {
                 var path = Path.Combine(root, "src", "Modules", module,
@@ -35,6 +44,15 @@ public sealed class DependencyTests
                     _ => throw new InvalidOperationException()
                 };
                 Assert.Equal(allowed.Order(), references.Order());
+                // Names alone are insufficient: a same-named project outside the module must not pass.
+                foreach (var reference in project.Descendants("ProjectReference"))
+                {
+                    var actual = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path)!,
+                        reference.Attribute("Include")!.Value.Replace('\\', Path.DirectorySeparatorChar)));
+                    var expected = Path.Combine(root, "src", "Modules", module,
+                        Path.GetFileNameWithoutExtension(actual), Path.GetFileName(actual));
+                    Assert.Equal(Path.GetFullPath(expected), actual);
+                }
                 if (layer is "Domain" or "Application")
                 {
                     Assert.Empty(project.Descendants("PackageReference"));
