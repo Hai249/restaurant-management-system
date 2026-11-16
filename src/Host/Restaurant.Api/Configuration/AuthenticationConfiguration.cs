@@ -88,7 +88,8 @@ public static class AuthenticationConfiguration
             .SetFallbackPolicy(new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .Build())
-            .AddPolicy("SystemAdministration", policy => policy.RequireRole("Admin"));
+            .AddPolicy("SystemAdministration", policy => policy.RequireRole("Admin"))
+            .AddPermissionPolicies();
 
         return services;
     }
