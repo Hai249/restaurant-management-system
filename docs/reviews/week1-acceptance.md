@@ -5,6 +5,8 @@
 - Người lập: Claude, thay mặt Hiếu. Người duyệt cuối: Hiếu.
 - Phạm vi: HIE-1.2, HIE-1.3, HIE-1.4, HIE-1.5 và HIE-1.5b/HAI-1.5 (phần mã của Hiếu). Việc của Phương, Bảo Anh, Duy và Hải chỉ được ghi khi nó ảnh hưởng đến kết luận của Hiếu; không nhận hộ.
 
+> **Cập nhật 18/11/2026:** job `Publish images to GHCR` đã xanh trở lại ở `bafc457` và `restaurant-web` đã có tag; phần còn lại của tuần 1 chuyển sang mục 8. Các mục 1–7 giữ nguyên làm lịch sử của ngày 17/11.
+
 Quy ước kết quả: **ĐẠT** = đã chạy lệnh hoặc đọc nguồn công khai trong phiên này, kết quả ghi bên dưới. **CHƯA KIỂM CHỨNG** = cần người có quyền (VPS, tài khoản GitHub admin, hai địa chỉ IP) làm. **KHÔNG ĐẠT** = đã kiểm và sai.
 
 ## 1. Kết luận ngắn
@@ -143,3 +145,33 @@ S4 (image đang chạy):
 ```
 
 Không dán mật khẩu, token hay `Set-Cookie` vào đây; che hoặc cắt trước khi ghi.
+
+## 8. Cập nhật 18/11/2026 (đối chiếu `develop` `bafc457`)
+
+Nguồn: API công khai của GitHub (`/actions/runs`, `/rulesets`, `/branches`, `/pulls`), `ghcr.io` bằng token ẩn danh, và `curl` chỉ-đọc tới staging lúc 19:02 UTC ngày 17/11 (02:02 ngày 18/11 giờ Việt Nam). Không đăng nhập, không có quyền admin repo, không vào VPS.
+
+| Mục | Ngày 17/11 | Ngày 18/11 | Bằng chứng |
+|---|---|---|---|
+| Job `Publish images to GHCR` | Đỏ ở `ccc536a` (bước *Build and push web image*) | **Xanh ở `bafc457`**: cả ba job (`Build and test`, `Identity SQL Server tests`, `Publish images to GHCR`) success | Run 44059105694 |
+| Nguyên nhân lỗi ở `ccc536a` | Chưa xác định | **Vẫn chưa xác định.** Log chi tiết cần quyền admin; lỗi không tái hiện ở run sau. Chưa phân biệt được khả năng (a) build lỗi trên runner và (b) push bị từ chối (mục 4.3) | Run 44044015151 |
+| Gói GHCR | `restaurant-web` có 0 tag | `restaurant-web`: tag `bafc457…` và `develop`. `restaurant-api`: tag `ccc536a…`, `develop`, `bafc457…`. Cả hai kéo được bằng token ẩn danh, tức đã Public | `ghcr.io/v2/trunghieu220504/<gói>/tags/list` trả 200 |
+| Test SQL Server của Phương trên CI | Chưa rõ | Bộ lọc `FullyQualifiedName~SqlServer` (`backend-ci.yml`, bước *Run SQL migration and bootstrap tests*) khớp tên lớp `PhuongWeekOneSqlServerTests`; job SQL xanh ở `bafc457`. **Chưa đọc được TRX** nên chưa xác nhận số test và việc không có test bị bỏ qua | `backend-ci.yml` dòng 96 |
+| Spike C03 (N4) | Chưa nghiệm thu | **Vẫn chưa.** `spike-c03-result.md` còn ghi "chưa thay thế nghiệm thu CI/staging"; chưa có kết quả lặp ≥ 20 lần và chưa có người ký review | `docs/spike-c03-result.md` |
+| Ruleset `develop` | `include: []` | **Không đổi**: `include: []`, `GET /branches/develop` trả `protected: false`; `main` trả `protected: true`. Mục 5.1 vẫn đúng | Ruleset 26971142 |
+| Staging | `/health/ready` 200, thiếu HSTS | **Không đổi**: `/health/ready` 200, vẫn không có `Strict-Transport-Security`, nên bản có PR #43 chưa được deploy. S1–S4 vẫn **CHƯA KIỂM CHỨNG** | `curl -sI https://staging.quanlynh.id.vn/` |
+| PR #24 (Duy) | Chưa rõ | Đã merge | `/pulls/24` |
+| PR #41 (BAO-1.4, Bảo Anh) | Chưa rõ | Đang mở; 4/4 check xanh; mergeable `clean`; **chưa có review nào** | `/pulls/41`, `/check-runs` |
+
+**Tác động lên S2 (refresh trên staging).** Bằng chứng trong PR #41 (log trình duyệt lúc 06:34 UTC ngày 17/11) cho thấy bundle web đang chạy trên staging còn đọc cờ `NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED` lúc chạy (`a.default.env.NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED`), tức nút refresh phía web chưa được nhúng khi build. Image web trên GHCR dựng với `--build-arg NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED=true` (`backend-ci.yml`, bước *Build and push web image*), nên cần Hải deploy image mới thì S2 qua trình duyệt mới có ý nghĩa. S2 gọi trực tiếp API (không qua web) không phụ thuộc cờ này. Đây là suy luận từ bằng chứng của Bảo Anh và từ file workflow; tôi chưa kiểm tra bundle đang chạy sau ngày 17/11.
+
+### 8.1 Việc còn lại để đóng tuần 1 của Hiếu
+
+| # | Việc | Người | Trạng thái |
+|---|---|---|---|
+| 1 | ~~Sửa job GHCR~~ Job đã xanh. Còn lại: theo dõi lần sau; nếu đỏ lại thì đọc log để phân biệt (a)/(b) | Hiếu (log) | Giảm xuống theo dõi |
+| 2 | Sửa *Target branches* của ruleset `develop` (mục 5.1) và kiểm *Bypass list* | Hiếu | **Còn mở** (cần quyền admin, giao diện Settings) |
+| 3 | Deploy `develop` mới nhất (HSTS, healthcheck, non-root, web có cờ refresh) lên staging và điền S1–S4 ở mục 7 | Hải | **Còn mở** (hạn Th 5 19/11) |
+| 4 | Hải ghi nhận xét review ADR-01 | Hải | **Còn mở** |
+| 5 | Phương: lặp mỗi kịch bản ≥ 20 lần, kết luận ĐẠT/KHÔNG ĐẠT trong `spike-c03-result.md` kèm người ký (N4) | Phương, Hải | **Còn mở** |
+| 6 | Review PR #41 (BAO-1.4). Người duyệt chính theo kế hoạch là Duy; PR sửa `.github/workflows/web-ci.yml`, `web/Dockerfile` và `infra/compose.frontend.yml` nên Hiếu hoặc Hải cần duyệt phần đó | Duy; Hiếu hoặc Hải | **Còn mở** |
+| 7 | Sau khi S1–S4 đạt: đổi HIE-1.5b và HIE-1.5 từ `In Review` sang `Done` trong sổ tiến độ cục bộ; HIE-1.2 chỉ đổi khi Hải review xong | Hiếu | Chờ mục 3 và 4 |
