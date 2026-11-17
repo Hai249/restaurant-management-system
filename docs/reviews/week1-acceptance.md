@@ -1,0 +1,145 @@
+# Biên bản nghiệm thu tuần 1 của Hiếu (HIE-2.0)
+
+- Ngày kiểm: **2026-11-17** (Thứ Ba, tuần 2).
+- Cơ sở kiểm: `origin/develop` tại `ccc536a` (sau khi merge PR #42, #43 của Hải).
+- Người lập: Claude, thay mặt Hiếu. Người duyệt cuối: Hiếu.
+- Phạm vi: HIE-1.2, HIE-1.3, HIE-1.4, HIE-1.5 và HIE-1.5b/HAI-1.5 (phần mã của Hiếu). Việc của Phương, Bảo Anh, Duy và Hải chỉ được ghi khi nó ảnh hưởng đến kết luận của Hiếu; không nhận hộ.
+
+Quy ước kết quả: **ĐẠT** = đã chạy lệnh hoặc đọc nguồn công khai trong phiên này, kết quả ghi bên dưới. **CHƯA KIỂM CHỨNG** = cần người có quyền (VPS, tài khoản GitHub admin, hai địa chỉ IP) làm. **KHÔNG ĐẠT** = đã kiểm và sai.
+
+## 1. Kết luận ngắn
+
+| Nhóm | Kết luận |
+|---|---|
+| Mã và test của HIE-1.2 → 1.5 | **ĐẠT.** Cả bốn PR đã merge; trên `develop` `ccc536a` build 0 cảnh báo/0 lỗi, 3 test kiến trúc + 118 test tích hợp (SQL Server 2022 thật) đạt, 0 bỏ qua; frontend 43/43 và `tsc` sạch. |
+| CI trên `develop` | **ĐẠT với test, KHÔNG ĐẠT ở bước publish.** Hai job `Build and test` và `Identity SQL Server tests` xanh ở `ccc536a`; job `Publish images to GHCR` đỏ ở bước *Build and push web image* (mục 4). |
+| Nghiệm thu trên staging (hai IP, refresh 4 bước, migration Seating) | **CHƯA KIỂM CHỨNG.** Staging đang chạy (mục 3) nhưng ba kiểm tra này cần tài khoản, hai IP và quyền VPS. Hải làm (N3). |
+| Quy trình review | **Có hai điểm lệch** so với quy định (mục 5): #37 và #43 merge không có approval; ruleset `develop` có vẻ chưa áp dụng cho nhánh nào. |
+
+Mốc #0 **chưa nên coi là đạt** cho đến khi mục 3 (N3) và mục 4 xong.
+
+## 2. Mã và test (đã kiểm chứng trong phiên này)
+
+### 2.1 PR đã vào `develop`
+
+Nguồn: API công khai của GitHub (`/pulls/{n}`, `/pulls/{n}/reviews`), đọc ngày 17/11.
+
+| Việc | PR | Merge lúc (UTC) | Người merge | Review ghi nhận |
+|---|---|---|---|---|
+| HIE-1.2 nền tảng và ADR-01 | #36 | 2026-11-16 04:10 | Trunghieu220504 | phuongdtrai: APPROVED. **Chưa có review của Hải** |
+| HIE-1.5b/HAI-1.5 proxy tin cậy | #37 | 2026-11-16 04:21 | Trunghieu220504 | **Không có review nào** |
+| HIE-1.5 Seating `InitialSeating` | #38 | 2026-11-16 04:21 | Trunghieu220504 | phuongdtrai: APPROVED |
+| HIE-1.4 26 policy + `RequirePermission` | #39 | 2026-11-16 04:21 | Trunghieu220504 | phuongdtrai: APPROVED |
+| HIE-1.3 refresh token | #26 | 2026-11-11 17:02 | phuongdtrai | phuongdtrai: APPROVED (người duyệt cũng là người merge). **Chưa có review của Hải** |
+
+### 2.2 Lệnh đã chạy trên `develop` `ccc536a`
+
+Máy Hiếu, Windows 11, .NET SDK 10.0.300, Docker 29.7.2, SQL Server `mcr.microsoft.com/mssql/server:2022-latest` chạy một lần trong container `hie-accept-sql` (đã xóa sau khi chạy). Mật khẩu `sa` sinh ngẫu nhiên, không lưu.
+
+| Lệnh | Kết quả |
+|---|---|
+| `dotnet restore RestaurantManagement.slnx --locked-mode` | Thành công |
+| `dotnet build RestaurantManagement.slnx -c Release --no-restore` | **0 cảnh báo, 0 lỗi** (2 phút 7 giây) |
+| `dotnet test RestaurantManagement.slnx -c Release --no-build` với `IDENTITY_TEST_SQLSERVER` trỏ vào container | `Restaurant.ArchitectureTests`: **3/3**. `Restaurant.IntegrationTests`: **118/118, 0 bỏ qua** (5 phút 22 giây) |
+| `npm test` (trong `web/`) | **8 file, 43/43 đạt** |
+| `npx tsc --noEmit` (trong `web/`) | Không có lỗi |
+
+Số 118 + 3 trùng với bằng chứng Codex đã ghi ngày 15/11 trong sổ tiến độ cục bộ của Hiếu (file không nằm trong git), nên hai lần chạy độc lập cho cùng kết quả.
+
+### 2.3 Đối chiếu từng tiêu chí "xong khi" (theo `phan-cong-chi-tiet-7-tuan.md`)
+
+| Việc | Tiêu chí | Kết quả |
+|---|---|---|
+| HIE-1.2 | PR được Phương **và Hải** duyệt; quy ước được tuân theo; `DependencyTests` cập nhật | Một phần: Phương duyệt, **Hải chưa có review ghi nhận**; 3 test kiến trúc đạt |
+| HIE-1.3 | Test thu hồi/hết hạn/dùng lại đạt trên SQL Server | Đạt. Nằm trong 118 test chạy trên SQL Server thật; lớp `IdentityRefreshTokenSqlServerTests` có các ca: dùng lại secret đã xoay vòng (ngay lập tức và sau thời gian ân hạn) thu hồi cả phiên; hết hạn, thiếu hoặc rác bị từ chối; hai request đồng thời chỉ cấp một token mới; đổi mật khẩu thu hồi mọi secret; tài khoản bị khóa không refresh được; lỗi phát token thì rollback giữ secret cũ; refresh trả vai trò và quyền hiện tại sau khi đổi vai trò |
+| HIE-1.4 | Test 403 theo từng vai trò cho một endpoint mẫu mỗi nhóm quyền | Đạt. `PermissionEndpointTests.Seeded_role_matrix_returns_401_403_or_200_for_every_permission` và `PermissionPolicyTests.Every_seeded_permission_has_an_authenticated_claim_policy` nằm trong 118 test (bản ghi 15/11: 130 ca có xác thực + 26 ca ẩn danh) |
+| HIE-1.5 | Test không mở hai phiên trên một bàn | Đạt. `SeatingSqlServerTests.Concurrent_opens_allow_exactly_one_active_session` (và 5 ca khác: đóng phiên giải phóng bàn, mã khách giữ nguyên sau chuyển bàn, chuyển về cùng bàn bị chặn, rowversion chặn cập nhật cũ, migration áp lại và down/up) nằm trong 118 test. **Ghi chú:** đây là test mức dữ liệu; test đồng thời mức API thuộc HIE-2.1 |
+| HIE-1.5b | Proxy tin cậy, giới hạn đăng nhập theo IP thật | Test mức mã đạt; **kiểm tra thật sau proxy chưa làm** (mục 3) |
+
+## 3. Staging (chưa kiểm chứng hết)
+
+Kiểm tra chỉ đọc, không đăng nhập, từ máy Hiếu lúc 08:41–08:42 UTC ngày 17/11:
+
+| Kiểm tra | Kết quả |
+|---|---|
+| `GET https://staging.quanlynh.id.vn/health/live` | 200, chứng chỉ hợp lệ |
+| `GET https://staging.quanlynh.id.vn/health/ready` | 200, nội dung `Healthy` |
+| `GET https://staging.quanlynh.id.vn/` | 200, trang web Next.js do Nginx phục vụ |
+| `http://staging.quanlynh.id.vn/` | 301 chuyển sang HTTPS |
+| `GET /api/system/modules` không token | 401 (đúng: yêu cầu xác thực) |
+| Header `Strict-Transport-Security` | **Không có.** Cấu hình HSTS của PR #43 đã merge nhưng **chưa được deploy lên VPS** |
+
+Phần dưới **chưa kiểm chứng**, giao cho Hải (N3) vì cần tài khoản thật, hai IP khác nhau hoặc quyền SSH. Hải ghi lệnh và kết quả thật vào mục "Bằng chứng staging" cuối file này.
+
+| Mã | Kiểm tra | Điều kiện đạt | Kết quả |
+|---|---|---|---|
+| S1 | Hai IP khác nhau, mỗi IP đăng nhập sai 11 lần trong 1 phút | Mỗi IP bị giới hạn riêng (trả 429 ở lần 11), IP kia không bị ảnh hưởng | CHƯA KIỂM CHỨNG |
+| S2 | Refresh 4 bước | Lần 1 → 200, lần 2 (token mới) → 200, dùng lại token cũ → 401, dùng token mới sau khi bị thu hồi chuỗi → 401 | CHƯA KIỂM CHỨNG |
+| S3 | Migration `InitialSeating` đã apply, có bản sao lưu trước khi apply | Bảng `seating.*` tồn tại; có tệp sao lưu có ngày | CHƯA KIỂM CHỨNG |
+| S4 | Bản deploy hiện tại là `ccc536a` hoặc mới hơn | Container API/web dùng image từ GHCR có tag commit | CHƯA KIỂM CHỨNG (HSTS còn thiếu cho thấy chưa deploy) |
+
+## 4. Hạ tầng liên quan đến kết luận của Hiếu
+
+### 4.1 Backend CI trên `develop`
+
+Nguồn: API công khai `/actions/runs`, `/actions/runs/{id}/jobs`, `/check-runs/{id}/annotations`.
+
+| Run | Commit | Kết quả |
+|---|---|---|
+| 44032166448 | `0b017cc` | success (cả hai job test) |
+| 44043939901 | `bc3199d` | cancelled (bị run mới hơn thay thế, vì #42 và #43 merge cách nhau 31 giây) |
+| **44044015151** | **`ccc536a`** | **failure**: `Build and test` success, `Identity SQL Server tests` success, **`Publish images to GHCR` failure ở bước 6 *Build and push web image*** |
+
+Annotation của job chỉ ghi `Process completed with exit code 1.`; log chi tiết cần quyền admin repo, tôi không đọc được.
+
+### 4.2 Đã loại trừ
+
+- Lỗi **không** do mã web: build image y hệt lệnh CI (`docker build -f web/Dockerfile --build-arg API_URL=http://api:8080 --build-arg NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED=true web`) thành công trên máy Hiếu, kể cả với `--no-cache` (6 phút 24 giây, Next.js compile và tạo 23 trang tĩnh).
+- Image API **đã được đẩy lên** và đọc được không cần đăng nhập: `ghcr.io/trunghieu220504/restaurant-api` có tag `ccc536ad…` và `develop` (đọc bằng token ẩn danh của GHCR).
+
+### 4.3 Còn lại (cần chủ repo)
+
+- Gói `ghcr.io/trunghieu220504/restaurant-web` có **0 tag**. Nguyên nhân chưa xác định. Cách làm nhanh nhất: mở Actions → run 44044015151 → job *Publish images to GHCR* → bước *Build and push web image* và đọc dòng lỗi cuối. Hai khả năng cần phân biệt: (a) bước `docker build` lỗi trên runner; (b) bước `docker push` bị từ chối (gói đã tồn tại nhưng chưa liên kết với repo nên `GITHUB_TOKEN` không có quyền ghi). Tôi **chưa có bằng chứng** để chọn giữa hai khả năng.
+- Nếu là (b): vào *Packages → restaurant-web → Package settings*, mục *Manage Actions access*, thêm repo này với quyền Write, rồi chạy lại workflow.
+
+## 5. Điểm lệch về quy trình review (cần chủ repo quyết định)
+
+1. **Ruleset `develop` có vẻ không áp dụng cho nhánh nào.** API công khai trả `conditions.ref_name.include = []` cho ruleset `develop` (id 26971142), còn ruleset `main` có `refs/heads/main`. Các luật bên trong là đúng (1 review bắt buộc, `Build and test` và `Identity SQL Server tests` bắt buộc), nhưng hai PR merge không đủ điều kiện: #37 (không review) và #43 (không review), #42 chỉ có comment. Đây là **suy luận từ dữ liệu công khai**, tôi chưa mở trang Settings; nếu Hiếu có quyền bỏ qua (bypass) thì cũng cho kết quả tương tự. Cách kiểm: *Settings → Rules → Rulesets → develop → Target branches*; thêm `refs/heads/develop` (hoặc *Include default branch* nếu `develop` là nhánh mặc định) và kiểm tra danh sách *Bypass*.
+2. **HIE-1.2 thiếu review của Hải.** Tiêu chí yêu cầu Phương và Hải duyệt; chỉ có Phương (#36). Đề xuất: Hải đọc `docs/adr/ADR-01-shared-foundation.md` cùng `docs/adr/ADR-01-review-checklist.md` và ghi nhận xét vào PR-E (đã nằm trong hướng dẫn của Hải), không cần mở lại #36. Tương tự #26 (refresh token) chỉ có review của Phương.
+3. **#37 và #43 merge không có approval.** Không cần hoàn tác (CI test xanh, kết quả đã được chạy lại ở mục 2). Chỉ cần ghi nhận để lần sau ruleset chặn đúng.
+
+## 6. Việc còn lại để đóng tuần 1 của Hiếu
+
+| # | Việc | Người | Hạn |
+|---|---|---|---|
+| 1 | Đọc log job *Publish images to GHCR* (mục 4.3) và sửa; đặt gói GHCR Public sau khi `restaurant-web` có tag | Hiếu (log, quyền gói), Hải (sửa workflow nếu là lỗi build) | Th 4 18/11 |
+| 2 | Sửa *Target branches* của ruleset `develop` (mục 5.1) | Hiếu | Th 4 18/11 |
+| 3 | Deploy bản `ccc536a` (HSTS, healthcheck, non-root) lên staging và ghi S1–S4 | Hải | Th 5 19/11 |
+| 4 | Hải ghi nhận xét review ADR-01 | Hải | Th 5 19/11 |
+| 5 | Sau khi S1–S4 đạt: đổi HIE-1.5b và HIE-1.5 từ `In Review` sang `Done` trong sổ tiến độ cục bộ của Hiếu | Hiếu | Th 5 19/11 |
+
+## 7. Bằng chứng staging (Hải điền)
+
+```text
+Ngày giờ:
+Người chạy:
+Commit đang chạy trên VPS (docker inspect / tag image):
+
+S1 (hai IP, 11 lần/phút):
+  lệnh:
+  kết quả:
+
+S2 (refresh 4 bước):
+  lệnh:
+  kết quả:
+
+S3 (migration Seating + sao lưu):
+  lệnh:
+  tên tệp sao lưu:
+  kết quả:
+
+S4 (image đang chạy):
+  kết quả:
+```
+
+Không dán mật khẩu, token hay `Set-Cookie` vào đây; che hoặc cắt trước khi ghi.
