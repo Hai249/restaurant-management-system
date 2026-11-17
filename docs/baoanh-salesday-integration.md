@@ -17,11 +17,13 @@ Canonical generation input: docs/api/openapi.json from develop. Bao Anh's
 src/lib/api/generated path and generation script are retained. Run npm run gen:api.
 Safe int64 strings normalize to numbers; unsafe amounts/unknown states fail.
 
-Refresh defaults OFF because the backend has no refresh endpoint. The existing
-single-flight implementation is retained and tests explicitly enable it. Only
-enable NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED=true after backend refresh is shipped
-and cookie/revocation contracts are verified. Without refresh, reload/expiry
-requires login. Login accepts the actual username without phone-name rewriting
+Update 2026-11-17: backend refresh was merged in PR #26. The frontend flag must
+be true at build time after that API and migration are deployed. The Dockerfile,
+compose build args and Web CI now explicitly set it; a runtime container env
+does not change compiled browser JS. The auth client still defaults OFF when
+the flag is absent. See week-one-acceptance.md for staging evidence and remaining
+browser acceptance; the earlier claim that no refresh endpoint exists is obsolete.
+Without refresh, reload/expiry requires login. Login accepts the actual username without phone-name rewriting
 or prefilled demo credentials. Successful login routes to /sales-day.
 
 Run from this worktree's web directory:

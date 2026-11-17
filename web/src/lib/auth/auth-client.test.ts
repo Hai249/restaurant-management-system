@@ -225,6 +225,108 @@ describe("Identity Authentication Client & Concurrency", () => {
         expect(getAccessToken()).not.toBeNull();
     });
 
+    for (const endSession of ["logout", "change-password"] as const) {
+        it(`a delayed refresh cannot restore a session after ${endSession}`, async () => {
+            await login(defaultMockAccount.userName, "Password123!");
+            let notifyStarted!: () => void;
+            let releaseResponse!: () => void;
+            const started = new Promise<void>((resolve) => {
+                notifyStarted = resolve;
+            });
+            const released = new Promise<void>((resolve) => {
+                releaseResponse = resolve;
+            });
+            server.use(
+                http.post("*/api/identity/refresh", async () => {
+                    notifyStarted();
+                    await released;
+                    return HttpResponse.json({
+                        accessToken: "delayed-access-token",
+                        expiresAt: new Date(Date.now() + 900_000).toISOString(),
+                        account: defaultMockAccount,
+                    });
+                }),
+            );
+
+            const pending = refreshAccessTokenSingleFlight();
+            await started;
+            try {
+                if (endSession === "logout") await logout();
+                else await changePassword("Password123!", "NewStrongPass456!");
+            } finally {
+                releaseResponse();
+            }
+
+            expect(await pending).toBeNull();
+            expect(getAccessToken()).toBeNull();
+        });
+    }
+
+    it.each([200, 401])(
+        "an old refresh response (%i) cannot overwrite or clear a newer session",
+        async (status) => {
+            await login(defaultMockAccount.userName, "Password123!");
+            setAccessToken("expired-old-session");
+            const unauthorized = vi.fn();
+            const unsubscribe = onUnauthorized(unauthorized);
+            let notifyStarted!: () => void;
+            let releaseResponse!: () => void;
+            const started = new Promise<void>((resolve) => {
+                notifyStarted = resolve;
+            });
+            const released = new Promise<void>((resolve) => {
+                releaseResponse = resolve;
+            });
+            server.use(
+                http.post("*/api/identity/refresh", async () => {
+                    notifyStarted();
+                    await released;
+                    return status === 401
+                        ? new HttpResponse(null, { status })
+                        : HttpResponse.json({
+                              accessToken: "old-session-access",
+                              expiresAt: new Date(
+                                  Date.now() + 900_000,
+                              ).toISOString(),
+                              account: defaultMockAccount,
+                          });
+                }),
+            );
+
+            const pending = authFetch("/api/identity/me");
+            await started;
+            try {
+                const newer = await login(
+                    defaultMockAccount.userName,
+                    "Password123!",
+                );
+                releaseResponse();
+                expect((await pending).status).toBe(401);
+                expect(getAccessToken()).toBe(newer.accessToken);
+                expect(unauthorized).not.toHaveBeenCalled();
+            } finally {
+                releaseResponse();
+                unsubscribe();
+            }
+        },
+    );
+
+    it("a failed logout keeps the current session available for retry", async () => {
+        const session = await login(
+            defaultMockAccount.userName,
+            "Password123!",
+        );
+        server.use(
+            http.post(
+                "*/api/identity/logout",
+                () => new HttpResponse(null, { status: 503 }),
+            ),
+        );
+        await expect(logout()).rejects.toThrow("Chưa đăng xuất được");
+        expect(getAccessToken()).toBe(session.accessToken);
+        expect((await getMe()).userName).toBe(defaultMockAccount.userName);
+    });
+
     it("7. when refresh fails, all concurrent requests fail and onUnauthorized listener is triggered", async () => {
         const unauthorizedSpy = vi.fn();
         onUnauthorized(unauthorizedSpy);
