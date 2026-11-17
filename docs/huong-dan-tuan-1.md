@@ -5,8 +5,8 @@
 > [phan-cong-chi-tiet-7-tuan.md](phan-cong-chi-tiet-7-tuan.md) (mã việc `HIE-`, `PHU-`, `BAO-`, `DUY-`, `HAI-`); khi hai
 > tài liệu khác nhau, **kế hoạch 7 tuần là bản gốc** và tài liệu này phải được sửa theo.
 >
-> **Cập nhật 11/11/2026 (thứ Tư):** nhóm đã làm từ 09/11. Mục 2 ghi lại trạng thái thật trên GitHub và các mục 5.x có thêm dòng
-> "Trạng thái 11/11" cho từng người. Dòng **gạch ngang** là việc đã xong theo GitHub; dòng khác là việc còn lại.
+> **Cập nhật 17/11/2026:** đối chiếu `origin/develop` tại `6ec9a93`; lịch theo ngày bên dưới giữ mục tiêu gốc. Xem [biên bản nghiệm thu Auth/Frontend](week-one-acceptance.md) để biết kết quả thật, bằng chứng và đề xuất tuần 2.
+> Đã merge không đồng nghĩa đã nghiệm thu; phần staging còn thiếu được ghi BLOCKED/NOT_RUN.
 >
 > Cách đọc: mục 1–4 đọc chung cả nhóm; mục 5 mỗi người đọc phần của mình và phần của người mình phụ thuộc; mục 7 là cách nghiệm thu thứ Sáu.
 
@@ -31,26 +31,26 @@ cho đến khi backend lên), rồi ghép với nhau vào thứ Năm. Đồng th
 
 **Không nằm trong tuần 1:** gọi món, bếp/bar, thanh toán, QR, SignalR thật, kho, báo cáo. Đừng bắt đầu sớm; việc đó làm lệch ưu tiên.
 
-## 2. Điểm xuất phát (kiểm tra trên GitHub ngày 11/11/2026)
+## 2. Hiện trạng đối chiếu ngày 17/11/2026
 
-**Đã có trên `develop` (3c26e5e):**
-- Identity: login, me, logout, change-password (PR #7, #8, merge 05/11). JWT sống 15 phút. **Chưa có refresh token.**
+**Hiện trạng tại `6ec9a93` ngày 17/11:**
+- Identity: login/me/logout/change-password và refresh xoay vòng (PR #26); đổi mật khẩu thu hồi mọi phiên. Policy PR #39 và forwarded headers PR #37 đã merge.
 - SalesDay và Catalog của Phương (PR #16, merge 10/11): migration, `GET /api/salesday/current`, `POST /api/salesday/open`, 5 test SQL Server, `docs/spike-c03-result.md`, `docs/phuong-tuan-1.md`. Catalog chưa có API.
-- Khung `web/` (Bảo Anh, commit 8fde101): Next.js 16, `output: "standalone"`, rewrite `/api/*` tới `API_URL` (mặc định `http://localhost:5080`), shadcn/ui, bảng, form, toast, 403/404, Playwright, MSW, `npm run gen:api` (đọc `${API_URL}/openapi/v1.json`). Chưa có `package-lock.json` trên `develop`, chưa có đăng nhập.
-- CI: chỉ `backend-ci.yml`; bước SQL Server chỉ chạy test có tên `IdentitySqlServer`, nên 5 test của Phương **chưa chạy trên CI**.
+- Frontend: có lock file, OpenAPI từ `docs/api/openapi.json`, Web CI, login/refresh/logout/đổi mật khẩu và `/sales-day` dùng API thật (PR #17, #24, #27 đã merge). Các màn prototype khác chưa coi là nghiệp vụ thật.
+- CI: có backend và Web CI; bộ lọc SQL hiện là `FullyQualifiedName~SqlServer`, gồm PhuongWeekOne. Chưa chạy lại CI remote trong lần sửa này.
 
-**Đang chờ:**
-- PR #17 `feature/duy-week-one` (Duy): realtime, âm thanh, thành phần vận hành, màn mở ngày. Sửa cả file cấu hình của Bảo Anh (`next.config.ts`, `package.json`, `tsconfig.json`, `eslint.config.mjs`) và thêm `package-lock.json`.
-- Nhánh `docs/identity-api-contract` (Hiếu, chưa push): `docs/api/openapi.json`, `docs/api/identity-contract.md`, khai báo kiểu response. Frontend cần file này để sinh client.
-- PR Dependabot #10–#13.
+**Các mục đã cập nhật:**
+- PR #17 đã merge (`a13992e`); không còn chờ merge. Nghiệm thu staging được ghi riêng.
+- Hợp đồng API Identity/OpenAPI đã merge PR #18; không còn chờ push.
+- Trạng thái PR Dependabot còn mở cần Hải đối chiếu trực tiếp; không kết luận từ danh sách cũ ngày 11/11.
 
-**Chưa có:** Dockerfile, docker-compose, CD, workflow cho `web/`, project `Contracts`, refresh token, 7 module nghiệp vụ còn lại (Seating, Sales, Fulfillment, Billing, Inventory, Reporting, Audit chỉ là khung rỗng). Chưa thấy trên GitHub dấu hiệu về VPS/DNS.
+**Còn thiếu kiểm chứng:** đúng image staging có cờ refresh lúc build, sáu ca Auth/SalesDay với tài khoản test, publish/deploy web, các kiểm tra bảo mật hạ tầng. Dockerfile/compose/Web CI và nền tảng Contracts đã có; Seating có migration PR #38.
 
-**Repo:** công khai; `main` và `develop` **chưa được bảo vệ**. Nhánh `chore/backend-foundation`, `chore/sync-salesday-docs`, `feature/identity-initialization`, `feature/identity-authentication` đã merge, có thể xóa.
+**Repo:** trạng thái branch protection và các PR Dependabot cần Hải kiểm tra trực tiếp; không suy ra từ checkout. Không xóa nhánh trong task này.
 
 **Thông tin kỹ thuật cần nhớ:**
 - Ở Development API chạy ở `http://localhost:5080`, CORS cho `http://localhost:3000`. OpenAPI (`/openapi/v1.json`, **đã kiểm chứng**) chỉ mở ở Development; staging không có, nên file OpenAPI phải xuất và commit (`docs/api/identity-contract.md` mục 4).
-- Giới hạn đăng nhập: 10 lần/phút theo IP; đổi mật khẩu: 5 lần/phút theo người dùng. Phía sau Nginx, mọi người dùng chung một IP cho đến khi thêm `UseForwardedHeaders` (HAI-1.5).
+- Giới hạn đăng nhập: 10 lần/phút/IP; đổi mật khẩu: 5 lần/phút/người dùng. Forwarded headers đã merge PR #37; hành vi sau proxy còn cần nghiệm thu.
 - Cấu hình bắt buộc để API chạy: `ConnectionStrings__Restaurant`, `Jwt__SigningKey` (**ít nhất 32 byte**), `Jwt__Issuer`, `Jwt__Audience` (mặc định `restaurant-api` / `restaurant-web`). Host **không tự migrate**.
 
 ## 3. Cách cả nhóm làm việc trong tuần
@@ -176,7 +176,7 @@ Mỗi mục có: mục tiêu, việc theo ngày kèm **cách làm**, kết quả
 
 **Mục tiêu tuần:** đưa Identity lên `develop`; khóa quy ước dùng chung để mọi module sau làm cùng một kiểu; cho frontend refresh token và OpenAPI sớm; có nền Seating.
 **Nhánh gợi ý:** `feature/identity-refresh-token`, `docs/adr-01-contracts`, `feature/seating-initial`, `feature/identity-forwarded-headers`.
-**Trạng thái 11/11:** HIE-1.1 đã xong (PR #7, #8 merge 05/11). Hợp đồng API Identity đã commit cục bộ trên nhánh `docs/identity-api-contract` (commit `e5cdc04`: OpenAPI, `identity-contract.md`, khai báo kiểu response) và **chờ push + PR**; đã quá hạn 10/11 17:00 và frontend đang chờ. HIE-1.2, 1.3, 1.4, 1.5 chưa bắt đầu theo GitHub. Việc kế tiếp theo thứ tự ưu tiên: push hợp đồng, HIE-1.3 (refresh token), HIE-1.2 (ADR-01), forwarded headers, HIE-1.5, HIE-1.4.
+**Trạng thái 17/11:** hợp đồng PR #18, refresh #26, ADR-01 #29, nền tảng #36, forwarded headers #37, Seating migration #38 và policy #39 đều đã merge theo git. Còn xác nhận API/migration/image staging và chạy nghiệm thu.
 
 | Ngày | Việc | Cách làm | Xong khi |
 |---|---|---|---|
@@ -201,7 +201,7 @@ Mỗi mục có: mục tiêu, việc theo ngày kèm **cách làm**, kết quả
 
 **Mục tiêu tuần:** trả lời câu hỏi rủi ro lớn nhất của dự án (khóa ứng dụng SQL theo ngày bán có chạy đúng khi nhiều module dùng chung giao dịch không), và mở được ngày bán qua API.
 **Nhánh gợi ý:** `feature/salesday-spike-c03` (có thể chỉ để chứa test và tài liệu), `feature/salesday-open-day`, `feature/catalog-initial`.
-**Trạng thái 11/11:** PHU-1.1, PHU-1.2, PHU-1.3 đã merge vào `develop` (PR #16, 10/11): 5 test SQL Server đạt ở máy Phương, hợp đồng ở `docs/phuong-tuan-1.md`. **Chưa nghiệm thu** vì: CI chưa chạy các test này (Hải mở rộng bộ lọc), chưa có người khác review kết luận spike, chưa có staging. Việc còn lại: (1) phối hợp Hải để test chạy trên CI, rồi cập nhật `docs/spike-c03-result.md` với kết quả CI; (2) lặp mỗi kịch bản ≥ 20 lần để loại trừ kết quả ngẫu nhiên; (3) đưa SalesDay lên staging cho Duy; (4) duyệt PR của Hiếu (hợp đồng API, ADR-01); (5) kiểm tra `scripts/Test-PhuongWeek1.ps1` không chứa chuỗi kết nối hay mật khẩu thật.
+**Trạng thái 17/11:** SalesDay/Catalog đã merge PR #16; PR #28 bổ sung C03. CI hiện lọc mọi test `SqlServer`, gồm PhuongWeekOne. Bằng chứng lịch sử ở `shared-foundation-handoff.md`/`spike-c03-result.md`; lần này không chạy lại SQL.
 
 | Ngày | Việc | Cách làm | Xong khi |
 |---|---|---|---|
@@ -222,7 +222,7 @@ Mỗi mục có: mục tiêu, việc theo ngày kèm **cách làm**, kết quả
 
 **Mục tiêu tuần:** có ứng dụng Next.js chạy được và lên VPS; đăng nhập thật với refresh hoạt động.
 **Nhánh gợi ý:** `feature/web-scaffold`, `feature/web-app-shell`, `feature/web-api-client`, `feature/web-auth`.
-**Trạng thái 11/11:** BAO-1.1 và BAO-1.3 phần lớn đã có trên `develop` (commit 8fde101: khung, menu theo quyền, bảng, form, toast, 403/404, Playwright, MSW). Còn lại: (1) `package-lock.json` (đang nằm trong PR #17, hoặc commit riêng); (2) BAO-1.2: `npm run gen:api` hiện đọc từ API đang chạy; khi Hiếu push `docs/api/openapi.json` thì cho script đọc được từ file đó để CI không cần chạy API, và để Hải thêm bước kiểm tra lệch; (3) BAO-1.4 đăng nhập, refresh một lần, route guard client, nối `PermissionProvider` (hiện nhận danh sách quyền rỗng) với `permissions` của `/me`; hợp đồng ở `docs/api/identity-contract.md` (refresh còn là bản nháp); (4) duyệt PR #17 của Duy.
+**Trạng thái 17/11:** có lock file, OpenAPI từ file, CI kiểm tra lệch, AuthProvider nối permissions, refresh một lần/nhiều tab, logout và đổi mật khẩu. Bundle staging ngày 17/11 vẫn thiếu cờ build; còn chờ deploy và sáu ca E2E thật trong `week-one-acceptance.md`.
 
 | Ngày | Việc | Cách làm | Xong khi |
 |---|---|---|---|
@@ -241,7 +241,7 @@ Mỗi mục có: mục tiêu, việc theo ngày kèm **cách làm**, kết quả
 
 **Mục tiêu tuần:** có sẵn bộ thành phần để tuần 2–4 dựng màn bếp/bar/phục vụ ngay; màn mở ngày bán chạy với API thật.
 **Nhánh gợi ý:** `feature/web-realtime-sound`, `feature/web-ops-components`, `feature/web-open-sales-day`.
-**Trạng thái 11/11:** PR #17 (`feature/duy-week-one`) đang mở với DUY-1.1, DUY-1.2, DUY-1.3 (làm trên mock). Việc còn lại: (1) Bảo Anh duyệt PR vì nó sửa `next.config.ts`, `package.json`, `tsconfig.json`, `eslint.config.mjs` thuộc phần của Bảo Anh (mục 3.5); (2) nối màn mở ngày với API thật khi SalesDay lên staging; hợp đồng đã có ở `docs/phuong-tuan-1.md` (mã lỗi `salesday.previous_not_closed`, `salesday.idempotency.conflict`...); `POST /open` cần header `Idempotency-Key` là UUID, sinh một khóa cho mỗi ý định mở ngày và giữ nguyên khi thử lại.
+**Trạng thái 17/11:** PR #17 đã merge (`a13992e`); PR #24 nối `/sales-day` với API thật và Auth của Bảo Anh. Bộ thành phần/realtime prototype vẫn có mock. Còn nghiệm thu staging mở ngày và chặn trùng.
 
 | Ngày | Việc | Cách làm | Xong khi |
 |---|---|---|---|
@@ -259,7 +259,7 @@ Mỗi mục có: mục tiêu, việc theo ngày kèm **cách làm**, kết quả
 
 **Mục tiêu tuần:** từ chưa có gì tới web + API chạy trên VPS qua HTTPS, có CI/CD bước 1 và nhánh được bảo vệ. Tuần này Hải có nhiều mã việc nhất và là người mà FE, BE đều chờ, nên cần thứ tự chặt.
 **Nhánh gợi ý:** `chore/infra-docker`, `chore/infra-compose-staging`, `ci/frontend-workflow`, `ci/push-images`, `docs/test-strategy`.
-**Trạng thái 11/11:** chưa thấy trên GitHub Dockerfile, compose, workflow mới hay thay đổi bảo vệ nhánh (`develop` vẫn chưa được bảo vệ). Hải cập nhật `docs/AGENT_PROGRESS.md` mục 5 với trạng thái thật của VPS/DNS. Việc cụ thể thêm so với bảng bên dưới: (1) mở rộng bộ lọc CI để chạy cả `PhuongWeekOneSqlServerTests` (hoặc bỏ bộ lọc khi đã có SQL Server), vì hiện 5 test của Phương chưa chạy trên CI; (2) thêm workflow cho `web/` (`npm ci`, `lint`, `test`, `build`, lọc theo đường dẫn `web/**`), cần `package-lock.json` từ PR #17; (3) dọn nhánh đã merge và bật tự xóa nhánh sau merge; (4) xử lý PR Dependabot #10–#13 sau khi CI xanh; (5) bảo vệ nhánh: repo công khai nên khả dụng, cần quyền quản trị repo. Việc Dockerfile web đã có sẵn `output: "standalone"` và rewrite `/api/*` tới `API_URL` nên không cần chờ Bảo Anh sửa thêm.
+**Trạng thái 17/11:** có Dockerfile API/web, compose/Nginx, Web CI và test strategy. Workflow sửa lần này build/smoke Docker nhưng không publish/deploy. Hải cần review và xác nhận image, migration, bảo vệ nhánh, GHCR/CD và bằng chứng hạ tầng.
 
 | Ngày | Việc | Cách làm | Xong khi |
 |---|---|---|---|
@@ -314,14 +314,14 @@ Mỗi mục có: mục tiêu, việc theo ngày kèm **cách làm**, kết quả
 
 | Mục | Đạt / không đạt | Bằng chứng / link PR | Ghi chú, việc dồn sang tuần 2 |
 |---|---|---|---|
-| 1 VPS + bảo mật | | | |
-| 2 HTTPS + web | | | |
-| 3 Đăng nhập + refresh | | | |
-| 4 Mở ngày | | | |
-| 5 Spike C03 | | | |
-| 6 ADR-01 | | | |
-| 7 Bảo vệ nhánh + CI | | | |
-| 8 Ước lượng lại | | | |
+| 1 VPS + bảo mật | NOT_RUN | `week-one-acceptance.md` | Chưa chạy SSH/firewall/quét cổng |
+| 2 HTTPS + web | Một phần | [Bằng chứng](week-one-acceptance.md#3-bằng-chứng-trực-tiếp-staging-trước-khi-sửa-được-deploy) | Login HTTPS 200; chưa nghiệm thu 4G/gia hạn chứng chỉ |
+| 3 Đăng nhập + refresh | BLOCKED | [Biên bản](week-one-acceptance.md) | Bundle staging thiếu cờ build; chờ deploy và tài khoản test; gồm logout/đổi mật khẩu |
+| 4 Mở ngày | BLOCKED | [Sáu ca E2E](week-one-acceptance.md#4-kịch-bản-e2e-thật-và-bảng-kết-quả) | Chờ đúng image và tài khoản có salesday.manage |
+| 5 Spike C03 | Chờ nhóm đối chiếu | `spike-c03-result.md`, `shared-foundation-handoff.md` | Có bằng chứng lịch sử; lần này không chạy lại SQL |
+| 6 ADR-01 | Đã merge; chưa kiểm tra đủ review gate | PR #29, #36 trong git log | Không suy ra số approval từ merge commit |
+| 7 Bảo vệ nhánh + CI | Một phần | `.github/workflows/web-ci.yml`, `backend-ci.yml` | Có workflow; chưa chạy CI remote hay kiểm chứng branch protection |
+| 8 Ước lượng lại | BLOCKED số liệu | [Đề xuất tuần 2](week-one-acceptance.md#5-ước-lượng-lại-phần-bảo-anh-và-chuyển-tuần-2) | Thiếu baseline/giờ thực tế, chưa tính được lệch >20% |
 
 **Nếu không đạt:**
 - Trượt ≤ 2 ngày và chỉ một mục: dồn sang đầu tuần 2, ghi vào bảng, không cắt phạm vi.
@@ -347,7 +347,7 @@ Mỗi mục có: mục tiêu, việc theo ngày kèm **cách làm**, kết quả
 **Còn chưa kiểm chứng:**
 
 - Yêu cầu phiên bản Node.js của Next.js 16 (xem `engines` trong `web/package.json` nếu có) và việc build `standalone` chạy trong container.
-- 5 test SQL Server của Phương (spike C03) mới chạy ở máy Phương, **chưa chạy trên CI**.
+- CI hiện lọc mọi test `SqlServer`, gồm PhuongWeekOne. Bằng chứng lịch sử ở `spike-c03-result.md` và `shared-foundation-handoff.md`; lần này không chạy lại backend.
 - Dockerfile của API, compose, Nginx + Let's Encrypt, `sqlcmd` trong image SQL Server (đường dẫn lấy từ CI hiện tại, dùng được cho CI), `docker compose run ... --bootstrap-admin` trên VPS: chưa dựng thử; thời lượng là ước lượng.
 - `UseForwardedHeaders` đặt đúng vị trí giữa các middleware và việc hành vi chuyển hướng HTTPS khi đứng sau proxy: suy ra từ `Program.cs`, chưa chạy thử.
 - Nhà đăng ký `.id.vn` có cho đổi nameserver sang Cloudflare hay không.

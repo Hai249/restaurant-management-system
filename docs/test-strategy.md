@@ -87,9 +87,9 @@ Trạng thái được cập nhật theo bằng chứng hiện có đến ngày 
 | INF09 | Identity migration idempotent và bootstrap Admin 1 lần | Hiếu + Hải | S1 | NOT_RUN trên staging |
 | INF10 | Login thật, khóa sau sai mật khẩu, rate limit đúng | Hiếu | S2 | NOT_RUN trên staging |
 | INF11 | `/me`, logout, đổi mật khẩu, session cũ bị từ chối | Hiếu | S2 | NOT_RUN trên staging |
-| INF12 | Refresh cookie xoay vòng, thu hồi token cũ | Hiếu + Bảo Anh | S2 | Chờ feature refresh |
-| INF13 | Frontend mock login/refresh, nhiều 401 chỉ refresh một lần | Bảo Anh | S2 | Web đã có và CI xanh; chưa đối chiếu bằng chứng riêng cho ca này |
-| INF14 | E2E web đăng nhập thật, refresh sau 15 phút | Bảo Anh + Hiếu + Hải | S2 | Frontend/HTTPS hoạt động; chưa nghiệm thu refresh sau 15 phút |
+| INF12 | Refresh cookie xoay vòng, thu hồi token cũ | Hiếu + Bảo Anh | S2 | Feature đã merge PR #26; còn chờ nghiệm thu staging, xem `week-one-acceptance.md` |
+| INF13 | Frontend mock login/refresh, nhiều 401 chỉ refresh một lần | Bảo Anh | S2 | PASS cục bộ 17/11: 48 unit test và 17 browser production test, gồm 5 request 401/1 refresh; xem `baoanh-auth-verification.md`. Không thay cho staging |
+| INF14 | E2E web đăng nhập thật, refresh sau 15 phút | Bảo Anh + Hiếu + Hải | S2 | BLOCKED ngày 17/11: bundle staging chưa nhúng cờ refresh; có ảnh/log trong `week-one-acceptance.md`; chờ deploy và tài khoản test |
 | INF15 | SalesDay mở lần đầu, chặn lần hai; đồng thời/idempotency | Phương + Duy | S2 | Chờ bằng chứng staging |
 | INF16 | C03 Shared/Exclusive SQL locks; rollback 2 DbContext nguyên vẹn | Phương | S1 | Có test cục bộ, chưa chứng thực CI |
 | INF17 | CI test/backend/frontend, PR đỏ bị chặn, GHCR phát hành image | Hải | S2 | Chưa nghiệm thu |
