@@ -34,6 +34,20 @@ The root layout connects `AuthProvider` and `PermissionProvider` to the authenti
 user's permissions before enabling protected navigation. Client-side menu filtering is only
 a usability feature: the backend must authorize every protected API request independently.
 
+## Seating preview (BAO-2.1)
+
+Run `npm run dev` and open `/dev/seating`. The preview lets you try area and
+table creation, editing and archiving, plus opening, transferring and closing a
+table session. The manager and staff options preview the catalog and session
+controls. Sample changes persist across reloads within that tab.
+
+The preview is available in development. Production `/tables` is pending the
+HIE-2.1 endpoints and OpenAPI contract. The API adapter will implement
+`SeatingGateway`, use the existing authenticated fetch, and map the documented
+problem `code` values to Vietnamese UI messages. The browser tests in
+`e2e/baoanh-seating.spec.ts` cover the preview; staging acceptance requires the
+deployed API and test accounts with Seating permissions.
+
 ## Identity Authentication & Client-side Route Guard
 
 Follows the specification in `docs/api/identity-contract.md`:
