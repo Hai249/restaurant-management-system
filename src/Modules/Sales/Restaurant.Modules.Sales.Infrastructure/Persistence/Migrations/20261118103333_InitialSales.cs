@@ -31,14 +31,15 @@ namespace Restaurant.Modules.Sales.Infrastructure.Persistence.Migrations
                     DongLuc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     TaoLuc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     NguoiTaoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Version = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                    Version = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false),
+                    SoLanCapNhat = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DonHang", x => x.Id);
                     table.CheckConstraint("CK_DonHang_Dong", "([TrangThai] = 'MO' AND [DongLuc] IS NULL) OR ([TrangThai] <> 'MO' AND [DongLuc] IS NOT NULL AND [DongLuc] >= [TaoLuc])");
                     table.CheckConstraint("CK_DonHang_Loai", "[Loai] IN ('TAI_BAN','MANG_DI')");
-                    table.CheckConstraint("CK_DonHang_Phien", "([Loai] = 'TAI_BAN' AND [PhienSuDungId] IS NOT NULL) OR ([Loai] = 'MANG_DI' AND [PhienSuDungId] IS NULL)");
+                    table.CheckConstraint("CK_DonHang_Phien", "([Loai] = 'TAI_BAN' AND [PhienSuDungId] IS NOT NULL) OR ([Loai] = 'MANG_DI' AND [PhienSuDungId] IS NULL AND [NhanBanLucTao] IS NULL)");
                     table.CheckConstraint("CK_DonHang_TrangThai", "[TrangThai] IN ('MO','DONG','HUY')");
                 });
 

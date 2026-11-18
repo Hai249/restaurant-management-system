@@ -27,7 +27,7 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options)
             t.HasCheckConstraint("CK_DonHang_Loai", "[Loai] IN ('TAI_BAN','MANG_DI')");
             t.HasCheckConstraint("CK_DonHang_TrangThai", "[TrangThai] IN ('MO','DONG','HUY')");
             t.HasCheckConstraint("CK_DonHang_Phien",
-                "([Loai] = 'TAI_BAN' AND [PhienSuDungId] IS NOT NULL) OR ([Loai] = 'MANG_DI' AND [PhienSuDungId] IS NULL)");
+                "([Loai] = 'TAI_BAN' AND [PhienSuDungId] IS NOT NULL) OR ([Loai] = 'MANG_DI' AND [PhienSuDungId] IS NULL AND [NhanBanLucTao] IS NULL)");
             t.HasCheckConstraint("CK_DonHang_Dong",
                 "([TrangThai] = 'MO' AND [DongLuc] IS NULL) OR ([TrangThai] <> 'MO' AND [DongLuc] IS NOT NULL AND [DongLuc] >= [TaoLuc])");
         });
@@ -38,6 +38,7 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options)
         order.Property(x => x.TenKhach).HasMaxLength(150);
         order.Property(x => x.TrangThai).HasMaxLength(32).IsUnicode(false).IsRequired();
         order.Property(x => x.Version).IsRowVersion();
+        order.Property(x => x.SoLanCapNhat).HasDefaultValue(0);
         order.HasIndex(x => x.MaDon).IsUnique();
         // D-10: at most one open order per session. Takeaway orders have no session, so NULL must not collide.
         order.HasIndex(x => x.PhienSuDungId).IsUnique().HasDatabaseName("UX_DonHang_PhienMo")

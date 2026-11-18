@@ -34,6 +34,13 @@ public sealed partial class DonHang
     public DateTime TaoLuc { get; private set; }
     public Guid? NguoiTaoId { get; private set; }
     public byte[] Version { get; private set; } = [];
+
+    /// <summary>
+    /// Bumped by every change under this order (batches, portions, close, cancel). Changing a child row alone does not
+    /// touch the order row, so without this counter the row version could not detect "add a batch" racing "close".
+    /// </summary>
+    public int SoLanCapNhat { get; private set; }
+
     public IReadOnlyList<DotGoiMon> Dots => dots;
 
     [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$")]
@@ -110,13 +117,14 @@ public sealed partial class DonHang
         var batch = new DotGoiMon(dots.Count == 0 ? 1 : dots.Max(x => x.SoDot) + 1, source, guestGrantId, staffId,
             requestKey, now, built);
         dots.Add(batch);
+        Touch();
         return SalesResult<DotGoiMon>.Ok(batch);
     }
 
     /// <summary>Confirms a pending batch together with all of its portions that are still pending.</summary>
     public SalesResult ConfirmBatch(int batchNumber, Guid actor, DateTime now)
     {
-        var found = Decide(batchNumber, actor, out var batch);
+        var found = Decide(batchNumber, actor, BatchStatus.Confirmed, out var batch);
         if (!found.Succeeded) return found;
         if (!batch!.Portions.Any(x => x.TrangThai == PortionStatus.Pending))
             return SalesResult.Fail(SalesErrors.BatchEmpty);
@@ -124,17 +132,19 @@ public sealed partial class DonHang
         batch.Decide(actor, now, null);
         foreach (var portion in batch.Portions.Where(x => x.TrangThai == PortionStatus.Pending))
             portion.Move(PortionStatus.Confirmed);
+        Touch();
         return SalesResult.Ok();
     }
 
     public SalesResult RejectBatch(int batchNumber, Guid actor, string? reason, DateTime now)
     {
         if (!Text.Required(reason, 1000, out var clean)) return SalesResult.Fail(SalesErrors.InputInvalid);
-        var found = Decide(batchNumber, actor, out var batch);
+        var found = Decide(batchNumber, actor, BatchStatus.Rejected, out var batch);
         if (!found.Succeeded) return found;
         batch!.Move(BatchStatus.Rejected);
         batch.Decide(actor, now, clean);
         batch.CancelOpenPortions();
+        Touch();
         return SalesResult.Ok();
     }
 
@@ -148,10 +158,14 @@ public sealed partial class DonHang
             return SalesResult.Fail(SalesErrors.BatchNotPending);
         batch.Move(BatchStatus.Cancelled);
         batch.CancelOpenPortions();
+        Touch();
         return SalesResult.Ok();
     }
 
-    /// <summary>Cancels one portion of a pending or confirmed batch while the order is open.</summary>
+    /// <summary>
+    /// Cancels one portion of a pending or confirmed batch while the order is open. A pending batch whose last portion
+    /// is cancelled is withdrawn too, so an empty batch never keeps waiting for a decision (and never blocks closing).
+    /// </summary>
     public SalesResult CancelPortion(int batchNumber, long portionId)
     {
         if (TrangThai != OrderStatus.Open) return SalesResult.Fail(SalesErrors.OrderNotOpen);
@@ -162,6 +176,9 @@ public sealed partial class DonHang
         if (!SalesStateMachines.Portion.CanMove(portion.TrangThai, PortionStatus.Cancelled))
             return SalesResult.Fail(SalesErrors.PortionAlreadyCancelled);
         portion.Move(PortionStatus.Cancelled);
+        if (batch.TrangThai == BatchStatus.Pending && batch.Portions.All(x => x.TrangThai == PortionStatus.Cancelled))
+            batch.Move(BatchStatus.Cancelled);
+        Touch();
         return SalesResult.Ok();
     }
 
@@ -194,19 +211,22 @@ public sealed partial class DonHang
         return SalesResult.Ok();
     }
 
-    private SalesResult Decide(int batchNumber, Guid actor, out DotGoiMon? batch)
+    private SalesResult Decide(int batchNumber, Guid actor, string decision, out DotGoiMon? batch)
     {
         batch = null;
         if (TrangThai != OrderStatus.Open) return SalesResult.Fail(SalesErrors.OrderNotOpen);
         if (actor == Guid.Empty) return SalesResult.Fail(SalesErrors.InputInvalid);
         batch = dots.SingleOrDefault(x => x.SoDot == batchNumber);
         if (batch is null) return SalesResult.Fail(SalesErrors.BatchNotFound);
-        return SalesStateMachines.Batch.CanMove(batch.TrangThai, BatchStatus.Confirmed)
+        return SalesStateMachines.Batch.CanMove(batch.TrangThai, decision)
             ? SalesResult.Ok() : SalesResult.Fail(SalesErrors.BatchNotPending);
     }
 
+    private void Touch() => SoLanCapNhat++;
+
     private void Finish(string status, DateTime now)
     {
+        Touch();
         TrangThai = status;
         DongLuc = now > TaoLuc ? now : TaoLuc;
     }
@@ -316,15 +336,8 @@ public sealed class ChiTietDon
                 !Text.Required(option.OptionName, 150, out var name) ||
                 portion.options.Any(x => x.TuyChonId == option.OptionId))
                 return SalesResult<ChiTietDon>.Fail(SalesErrors.InputInvalid);
-            portion.options.Add(new TuyChonDaDat
-            {
-                TuyChonId = option.OptionId,
-                NhomTuyChonId = option.GroupId,
-                TenNhomChot = group!,
-                LoaiNhomChot = option.GroupKind,
-                TenTuyChonChot = name!,
-                GiaCongChot = option.Surcharge
-            });
+            portion.options.Add(new TuyChonDaDat(
+                option.OptionId, option.GroupId, group!, option.GroupKind, name!, option.Surcharge));
         }
 
         return SalesResult<ChiTietDon>.Ok(portion);
@@ -340,13 +353,27 @@ public sealed class ChiTietDon
 
 public sealed class TuyChonDaDat
 {
-    public long ChiTietDonId { get; set; }
-    public long TuyChonId { get; set; }
-    public long NhomTuyChonId { get; set; }
-    public string TenNhomChot { get; set; } = "";
-    public string LoaiNhomChot { get; set; } = "";
-    public string TenTuyChonChot { get; set; } = "";
-    public long GiaCongChot { get; set; }
+    private TuyChonDaDat()
+    {
+    }
+
+    internal TuyChonDaDat(long optionId, long groupId, string groupName, string groupKind, string optionName, long surcharge)
+    {
+        TuyChonId = optionId;
+        NhomTuyChonId = groupId;
+        TenNhomChot = groupName;
+        LoaiNhomChot = groupKind;
+        TenTuyChonChot = optionName;
+        GiaCongChot = surcharge;
+    }
+
+    public long ChiTietDonId { get; private set; }
+    public long TuyChonId { get; private set; }
+    public long NhomTuyChonId { get; private set; }
+    public string TenNhomChot { get; private set; } = "";
+    public string LoaiNhomChot { get; private set; } = "";
+    public string TenTuyChonChot { get; private set; } = "";
+    public long GiaCongChot { get; private set; }
 }
 
 internal static class Text

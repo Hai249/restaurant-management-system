@@ -239,15 +239,63 @@ public sealed class SalesDomainTests
     }
 
     [Fact]
-    public void A_batch_with_every_portion_cancelled_cannot_be_confirmed_but_can_be_cancelled()
+    public void Cancelling_the_last_portion_of_a_pending_batch_withdraws_the_batch()
     {
         var order = OpenOrder();
         var batch = Add(order);
         Number(batch);
         Assert.True(order.CancelPortion(1, batch.Portions[0].Id).Succeeded);
-        Assert.Equal(SalesErrors.BatchEmpty, order.ConfirmBatch(1, Staff, T0).Error);
-        Assert.Equal(BatchStatus.Pending, batch.TrangThai);
-        Assert.True(order.CancelBatch(1).Succeeded);
+        Assert.Equal(BatchStatus.Cancelled, batch.TrangThai);
+        Assert.Equal(SalesErrors.BatchNotPending, order.ConfirmBatch(1, Staff, T0).Error);
+        Assert.Equal(SalesErrors.BatchNotPending, order.RejectBatch(1, Staff, "No", T0).Error);
+        Assert.Equal(SalesErrors.BatchNotPending, order.CancelBatch(1).Error);
+        // an emptied batch no longer blocks closing the order
+        Assert.True(order.Close(T0.AddHours(1)).Succeeded);
+    }
+
+    [Fact]
+    public void Cancelling_the_last_portion_of_a_confirmed_batch_keeps_the_batch_confirmed()
+    {
+        var order = OpenOrder();
+        var batch = Add(order);
+        Number(batch);
+        Assert.True(order.ConfirmBatch(1, Staff, T0).Succeeded);
+        Assert.True(order.CancelPortion(1, batch.Portions[0].Id).Succeeded);
+        Assert.Equal(BatchStatus.Confirmed, batch.TrangThai);
+    }
+
+    [Fact]
+    public void Every_change_under_an_order_bumps_its_update_counter()
+    {
+        var order = OpenOrder();
+        Assert.Equal(0, order.SoLanCapNhat);
+        var first = Add(order, portions: [Portion(), Portion()]);
+        Number(first);
+        var afterAdd = order.SoLanCapNhat;
+        Assert.Equal(1, afterAdd);
+        Assert.True(order.CancelPortion(1, first.Portions[0].Id).Succeeded);
+        Assert.Equal(afterAdd + 1, order.SoLanCapNhat);
+        Assert.True(order.ConfirmBatch(1, Staff, T0).Succeeded);
+        Assert.Equal(afterAdd + 2, order.SoLanCapNhat);
+        Add(order);
+        Assert.True(order.RejectBatch(2, Staff, "No", T0).Succeeded);
+        Add(order);
+        Assert.True(order.CancelBatch(3).Succeeded);
+        Assert.Equal(afterAdd + 6, order.SoLanCapNhat);
+        Assert.True(order.Close(T0.AddHours(1)).Succeeded);
+        Assert.Equal(afterAdd + 7, order.SoLanCapNhat);
+    }
+
+    [Fact]
+    public void A_refused_change_does_not_bump_the_update_counter()
+    {
+        var order = OpenOrder();
+        Add(order);
+        var before = order.SoLanCapNhat;
+        Assert.False(order.Close(T0.AddHours(1)).Succeeded);
+        Assert.False(order.ConfirmBatch(9, Staff, T0).Succeeded);
+        Assert.False(order.RejectBatch(1, Staff, " ", T0).Succeeded);
+        Assert.Equal(before, order.SoLanCapNhat);
     }
 
     [Fact]

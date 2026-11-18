@@ -293,6 +293,51 @@ public sealed class SalesSqlServerTests : IAsyncLifetime
     }
 
     [SqlServerFact]
+    public Task Adding_a_batch_then_closing_at_the_same_time_cannot_both_win() => AddAndCloseRace(adderSavesFirst: true);
+
+    [SqlServerFact]
+    public Task Closing_then_adding_a_batch_at_the_same_time_cannot_both_win() => AddAndCloseRace(adderSavesFirst: false);
+
+    private async Task AddAndCloseRace(bool adderSavesFirst)
+    {
+        long orderId;
+        await using (var db = CreateContext())
+        {
+            var order = DonHang.Create("DH-1", OrderTypes.Takeaway, Day, null, null, "An", Staff, Now).Value!;
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+            orderId = order.Id;
+        }
+
+        await using var adder = CreateContext();
+        await using var closer = CreateContext();
+        var adding = await Load(adder, orderId);
+        var closing = await Load(closer, orderId);
+        Assert.True(adding.AddBatch(BatchSource.Staff, null, Staff, Guid.NewGuid(), [Burger()], Now.AddMinutes(1)).Succeeded);
+        Assert.True(closing.Close(Now.AddMinutes(2)).Succeeded);
+
+        var (firstSaver, secondSaver) = adderSavesFirst ? (adder, closer) : (closer, adder);
+        await firstSaver.SaveChangesAsync();
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => secondSaver.SaveChangesAsync());
+
+        // Whatever won, a closed order never carries a batch that waits for confirmation.
+        Assert.Equal(0, await CountAsync(
+            "SELECT COUNT(*) FROM sales.DonHang d JOIN sales.DotGoiMon b ON b.DonHangId = d.Id "
+            + "WHERE d.TrangThai = 'DONG' AND b.TrangThai = 'CHO_XAC_NHAN'"));
+    }
+
+    [SqlServerFact]
+    public async Task A_takeaway_order_cannot_carry_a_table_label()
+    {
+        Assert.Equal(547, await ErrorAsync(
+            "INSERT INTO sales.DonHang (MaDon, NgayBanId, Loai, PhienSuDungId, NhanBanLucTao, TrangThai, TaoLuc) "
+            + $"VALUES ('DH-1', '{Day}', 'MANG_DI', NULL, N'B1', 'MO', SYSUTCDATETIME())"));
+        await ExecAsync(
+            "INSERT INTO sales.DonHang (MaDon, NgayBanId, Loai, PhienSuDungId, NhanBanLucTao, TrangThai, TaoLuc) "
+            + $"VALUES ('DH-2', '{Day}', 'TAI_BAN', 7, N'B1', 'MO', SYSUTCDATETIME())");
+    }
+
+    [SqlServerFact]
     public async Task The_order_aggregate_cannot_open_a_second_order_for_a_busy_session()
     {
         await using var db = CreateContext();

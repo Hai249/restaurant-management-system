@@ -131,6 +131,11 @@ namespace Restaurant.Modules.Sales.Infrastructure.Persistence.Migrations
                     b.Property<long?>("PhienSuDungId")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("SoLanCapNhat")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("TaoLuc")
                         .HasColumnType("datetime2");
 
@@ -170,7 +175,7 @@ namespace Restaurant.Modules.Sales.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_DonHang_Loai", "[Loai] IN ('TAI_BAN','MANG_DI')");
 
-                            t.HasCheckConstraint("CK_DonHang_Phien", "([Loai] = 'TAI_BAN' AND [PhienSuDungId] IS NOT NULL) OR ([Loai] = 'MANG_DI' AND [PhienSuDungId] IS NULL)");
+                            t.HasCheckConstraint("CK_DonHang_Phien", "([Loai] = 'TAI_BAN' AND [PhienSuDungId] IS NOT NULL) OR ([Loai] = 'MANG_DI' AND [PhienSuDungId] IS NULL AND [NhanBanLucTao] IS NULL)");
 
                             t.HasCheckConstraint("CK_DonHang_TrangThai", "[TrangThai] IN ('MO','DONG','HUY')");
                         });
