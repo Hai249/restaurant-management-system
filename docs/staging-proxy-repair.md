@@ -1,6 +1,16 @@
 # Sửa cấu hình trusted proxy của staging hiện tại
 
-Theo dõi [issue #51](https://github.com/Trunghieu220504/restaurant-management-system/issues/51). API/web đang dùng image SHA `7de77d4cbd15deb474bab146ae6f14dd05937dbe`, nhưng API không có biến KnownProxies; Nginx ở mạng cũ `restaurant-staging_internal`. Hai nguồn đã tái hiện chia tổng hạn mức 10 login request trước 429. Không dùng mặc định subnet mới của repo để thay mạng SQL đang chạy.
+## Kết quả kiểm lại ngày 18/11/2026
+
+Audit 13:49 UTC xác nhận API có đúng `ReverseProxy__KnownProxies__0=172.18.0.3`, trùng peer Nginx runtime; override đã tồn tại trên VPS và Nginx tiếp tục overwrite XFF thành remote_addr. API/web giữ nguyên image ID và revision trước sửa. Agent không nhận transcript apply proxy; kết luận dưới đây dựa vào cấu hình và kết quả kiểm thử trực tiếp, không suy ra đã tự so sánh toàn bộ container ID/StartedAt trước/sau.
+
+Hai public outbound IPv4 được xác minh khác nhau, không lưu địa chỉ. Retest bắt đầu cùng epoch 13:50:39 UTC: **mỗi nguồn nhận riêng 10 × 400 rồi 429**, thay cho tổng hạn mức chung trước đây. Ngay sau khi hết hạn mức workstation, thêm 5 request đổi X-Forwarded-For giả sang các địa chỉ TEST-NET khác nhau: cả 5 vẫn 429. Không dùng credential, không đổi SQL/SalesDay; HTTPS và health 200.
+
+Phần rate limit độc lập đồng thời và chống bypass header **PASS**; INF10 tổng thể vẫn PARTIAL vì khóa tài khoản chưa nghiệm thu. [Bằng chứng trong PR #52](https://github.com/Trunghieu220504/restaurant-management-system/pull/52), [issue #51](https://github.com/Trunghieu220504/restaurant-management-system/issues/51) theo dõi review/merge PR này. Giữ override khi deploy API lần sau và xác minh lại peer khi Nginx bị recreate. Không cần áp dụng lại script chỉ để lặp kết quả.
+
+## Lỗi và quy trình sửa ban đầu
+
+Theo dõi [issue #51](https://github.com/Trunghieu220504/restaurant-management-system/issues/51). Trước sửa, API/web dùng image SHA `7de77d4cbd15deb474bab146ae6f14dd05937dbe`, nhưng API không có biến KnownProxies; Nginx ở mạng cũ `restaurant-staging_internal`. Hai nguồn đã tái hiện chia tổng hạn mức 10 login request trước 429. Không dùng mặc định subnet mới của repo để thay mạng SQL đang chạy.
 
 [Script sửa cố định](../scripts/restaurant-week1-fix-proxy.sh) hỗ trợ `--plan` và `--apply`, chỉ root trên hostname restaurant-staging. Script dùng đúng năm file Compose được xác nhận từ label của container API và working directory `/home/deploy/restaurant-management-system/infra`.
 
