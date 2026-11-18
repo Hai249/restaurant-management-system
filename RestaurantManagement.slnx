@@ -14,18 +14,21 @@
     <Project Path="src/Modules/Seating/Restaurant.Modules.Seating.Application/Restaurant.Modules.Seating.Application.csproj" />
     <Project Path="src/Modules/Seating/Restaurant.Modules.Seating.Infrastructure/Restaurant.Modules.Seating.Infrastructure.csproj" />
     <Project Path="src/Modules/Seating/Restaurant.Modules.Seating.Presentation/Restaurant.Modules.Seating.Presentation.csproj" />
+    <Project Path="src/Modules/Seating/Restaurant.Modules.Seating.Contracts/Restaurant.Modules.Seating.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Catalog/">
     <Project Path="src/Modules/Catalog/Restaurant.Modules.Catalog.Domain/Restaurant.Modules.Catalog.Domain.csproj" />
     <Project Path="src/Modules/Catalog/Restaurant.Modules.Catalog.Application/Restaurant.Modules.Catalog.Application.csproj" />
     <Project Path="src/Modules/Catalog/Restaurant.Modules.Catalog.Infrastructure/Restaurant.Modules.Catalog.Infrastructure.csproj" />
     <Project Path="src/Modules/Catalog/Restaurant.Modules.Catalog.Presentation/Restaurant.Modules.Catalog.Presentation.csproj" />
+    <Project Path="src/Modules/Catalog/Restaurant.Modules.Catalog.Contracts/Restaurant.Modules.Catalog.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Sales/">
     <Project Path="src/Modules/Sales/Restaurant.Modules.Sales.Domain/Restaurant.Modules.Sales.Domain.csproj" />
     <Project Path="src/Modules/Sales/Restaurant.Modules.Sales.Application/Restaurant.Modules.Sales.Application.csproj" />
     <Project Path="src/Modules/Sales/Restaurant.Modules.Sales.Infrastructure/Restaurant.Modules.Sales.Infrastructure.csproj" />
     <Project Path="src/Modules/Sales/Restaurant.Modules.Sales.Presentation/Restaurant.Modules.Sales.Presentation.csproj" />
+    <Project Path="src/Modules/Sales/Restaurant.Modules.Sales.Contracts/Restaurant.Modules.Sales.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Fulfillment/">
     <Project Path="src/Modules/Fulfillment/Restaurant.Modules.Fulfillment.Domain/Restaurant.Modules.Fulfillment.Domain.csproj" />
@@ -38,6 +41,7 @@
     <Project Path="src/Modules/Billing/Restaurant.Modules.Billing.Application/Restaurant.Modules.Billing.Application.csproj" />
     <Project Path="src/Modules/Billing/Restaurant.Modules.Billing.Infrastructure/Restaurant.Modules.Billing.Infrastructure.csproj" />
     <Project Path="src/Modules/Billing/Restaurant.Modules.Billing.Presentation/Restaurant.Modules.Billing.Presentation.csproj" />
+    <Project Path="src/Modules/Billing/Restaurant.Modules.Billing.Contracts/Restaurant.Modules.Billing.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Inventory/">
     <Project Path="src/Modules/Inventory/Restaurant.Modules.Inventory.Domain/Restaurant.Modules.Inventory.Domain.csproj" />
@@ -50,6 +54,7 @@
     <Project Path="src/Modules/SalesDay/Restaurant.Modules.SalesDay.Application/Restaurant.Modules.SalesDay.Application.csproj" />
     <Project Path="src/Modules/SalesDay/Restaurant.Modules.SalesDay.Infrastructure/Restaurant.Modules.SalesDay.Infrastructure.csproj" />
     <Project Path="src/Modules/SalesDay/Restaurant.Modules.SalesDay.Presentation/Restaurant.Modules.SalesDay.Presentation.csproj" />
+    <Project Path="src/Modules/SalesDay/Restaurant.Modules.SalesDay.Contracts/Restaurant.Modules.SalesDay.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
   <Folder Name="/src/Modules/Audit/">
