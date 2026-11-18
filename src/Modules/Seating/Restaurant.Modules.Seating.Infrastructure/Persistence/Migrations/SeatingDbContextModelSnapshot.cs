@@ -243,6 +243,44 @@ namespace Restaurant.Modules.Seating.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Restaurant.Modules.Seating.Domain.YeuCauDaXuLy", b =>
+                {
+                    b.Property<string>("Operation")
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<Guid>("ActorScope")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("Key")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RequestHash")
+                        .IsRequired()
+                        .HasColumnType("binary(32)");
+
+                    b.Property<string>("ResultReference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Operation", "ActorScope", "Key")
+                        .HasName("PK_YeuCauDaXuLy");
+
+                    b.ToTable("YeuCauDaXuLy", "seating");
+                });
+
             modelBuilder.Entity("Restaurant.Modules.Seating.Domain.Ban", b =>
                 {
                     b.HasOne("Restaurant.Modules.Seating.Domain.KhuVuc", null)

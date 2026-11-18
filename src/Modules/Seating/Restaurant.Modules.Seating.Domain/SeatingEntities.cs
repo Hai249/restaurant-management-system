@@ -53,3 +53,19 @@ public sealed class QuyenTruyCapKhach
     public DateTime? ThuHoiLuc { get; set; }
     public byte[] Version { get; set; } = [];
 }
+
+/// <summary>
+/// Record of a command that already ran, keyed by (operation, actor, idempotency key). The same key with the
+/// same payload hash replays the stored result; the same key with a different payload is rejected.
+/// Raw guest tokens or passwords must never be stored here.
+/// </summary>
+public sealed class YeuCauDaXuLy
+{
+    public string Operation { get; set; } = "";
+    public Guid ActorScope { get; set; }
+    public Guid Key { get; set; }
+    public byte[] RequestHash { get; set; } = [];
+    public string ResultReference { get; set; } = "";
+    public string State { get; set; } = "";
+    public DateTime CreatedAt { get; set; }
+}

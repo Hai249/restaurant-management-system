@@ -8,6 +8,13 @@ public sealed class SeatingDbContext(DbContextOptions<SeatingDbContext> options)
 {
     public const string Schema = "seating";
 
+    public DbSet<KhuVuc> Areas => Set<KhuVuc>();
+    public DbSet<Ban> Tables => Set<Ban>();
+    public DbSet<PhienSuDung> Sessions => Set<PhienSuDung>();
+    public DbSet<ChuyenBan> Transfers => Set<ChuyenBan>();
+    public DbSet<QuyenTruyCapKhach> Grants => Set<QuyenTruyCapKhach>();
+    public DbSet<YeuCauDaXuLy> Requests => Set<YeuCauDaXuLy>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -66,5 +73,13 @@ public sealed class SeatingDbContext(DbContextOptions<SeatingDbContext> options)
         grant.Property(x => x.Version).IsRowVersion();
         grant.HasIndex(x => x.TokenHash).IsUnique();
         grant.HasOne<PhienSuDung>().WithMany().HasForeignKey(x => x.PhienSuDungId).OnDelete(DeleteBehavior.NoAction);
+
+        var request = modelBuilder.Entity<YeuCauDaXuLy>();
+        request.ToTable("YeuCauDaXuLy");
+        request.HasKey(x => new { x.Operation, x.ActorScope, x.Key }).HasName("PK_YeuCauDaXuLy");
+        request.Property(x => x.Operation).HasMaxLength(40).IsUnicode(false).IsRequired();
+        request.Property(x => x.RequestHash).HasColumnType("binary(32)").IsRequired();
+        request.Property(x => x.ResultReference).HasMaxLength(100).IsUnicode(false).IsRequired();
+        request.Property(x => x.State).HasMaxLength(20).IsUnicode(false).IsRequired();
     }
 }
