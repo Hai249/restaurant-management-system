@@ -78,7 +78,7 @@ Chủ là người viết test; Hải phụ trách chạy CI, tổng hợp trạ
 |---|---|---|---|---|
 | INF01 | SSH khóa với user `deploy`; root/password login theo cấu hình đã duyệt | Hải | S1 | PARTIAL — SSH khóa deploy thành công, cấu hình tổng quát tắt root/password; chưa kiểm tra riêng các điều kiện Match theo kết nối. [Bằng chứng](evidence/week-one/vps-readonly-2026-11-18.md) |
 | INF02 | Quét từ 4G chỉ thấy 22/80/443, không thấy 1433/8080 | Hải | S1 | PARTIAL — thử năm cổng từ máy ngoài VPS: 22/80/443 kết nối được, 1433/8080 không; chưa quét toàn bộ từ 4G hoặc IPv6 |
-| INF03 | UFW/fail2ban/auto security updates hoạt động | Hải | S2 | PARTIAL — UFW active, fail2ban có jail sshd, unattended-upgrades enabled/active; chưa xác minh chính sách và lịch sử cập nhật |
+| INF03 | UFW/fail2ban/auto security updates hoạt động | Hải | S2 | FAIL phần auto-update: apt-config trả Update-Package-Lists=0, Unattended-Upgrade=0; service active không đủ. UFW active, fail2ban có jail sshd. [Bằng chứng](evidence/week-one/vps-readonly-2026-11-18.md) |
 | INF04 | SQL Docker nhận `SELECT 1`; volume tồn tại sau recreate không xóa dữ liệu | Hải | S2 | PARTIAL — SELECT 1 được báo cáo đạt; không thử recreate SQL trên staging |
 | INF05 | `staging.quanlynh.id.vn` phân giải đúng IP VPS | Hải + người giữ DNS | S2 | PASS — A record trùng địa chỉ đã dùng SSH vào VPS, kiểm tra 18/11 |
 | INF06 | HTTPS hợp lệ, HTTP→HTTPS, gia hạn được thử | Hải | S2 | PARTIAL — HTTPS 200, báo cáo HTTP 301/HSTS, certbot.timer enabled; chưa thử gia hạn |
