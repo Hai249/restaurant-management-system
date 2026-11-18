@@ -237,6 +237,6 @@ Người chạy: Claude, thay mặt Hiếu, bằng `curl` từ máy Hiếu, dùn
 | `GET /api/salesday/current` | ĐẠT | 200, thân rỗng (chưa có ngày bán đang mở). |
 | **Seating API trên staging** | **KHÔNG ĐẠT** | `GET /api/seating/board`, `/areas`, `/tables` với token hợp lệ đều trả **404**. Tài khoản `Admin` chỉ có `identity.accounts.manage` và `identity.roles.manage`; nếu route tồn tại thì kết quả phải là 403. Vậy image đang chạy chưa chứa PR #58. |
 
-**Đính chính mục 8 và phần trả lời trước đó:** ghi nhận "route Seating tồn tại vì không token trả 401" là **sai**. Middleware xác thực cũng trả 401 cho đường dẫn không có thật. Chỉ kết quả có token (404) mới có giá trị.
+**Lưu ý về phép thử:** gọi không có token và nhận 401 **không** chứng minh route tồn tại, vì middleware xác thực cũng trả 401 cho đường dẫn không có thật. Chỉ phép thử có token (404 ở trên) mới có giá trị.
 
 Chưa kiểm chứng sau lần kiểm này: S1 (hai IP, 11 lần/phút), S3 (migration Seating và sao lưu), S4 (commit đang chạy), mọi thao tác Seating thật (cần tài khoản `Manager` hoặc `Staff`). Hải cần deploy lại `develop` mới nhất; sau đó chạy lại `GET /api/seating/board` với tài khoản `Staff` hoặc `Manager`, kết quả đúng là 200, và với `Admin` là 403.
