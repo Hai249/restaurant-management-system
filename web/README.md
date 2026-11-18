@@ -90,3 +90,11 @@ Follows the specification in `docs/api/identity-contract.md`:
   revokes every session afterwards, so the user is sent back to `/login`.
 - **Testing**: Run `npm test` to execute Vitest suites, including the concurrency test in
   `src/lib/auth/auth-client.test.ts`.
+
+## Operations Previews and Staging Smoke
+
+Development preview: `/dev/week-three`. Kitchen, closing and billing fixtures
+are isolated from production financial operations. The kitchen route uses the
+new board only in development; production does not display fixture tickets.
+See `../docs/duy-week-two-three.md` for status, API dependencies, receipt checks
+and the guarded staging smoke command (`npm run test:smoke:staging`).

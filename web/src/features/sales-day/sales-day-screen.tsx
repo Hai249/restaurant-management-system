@@ -24,6 +24,7 @@ export function SalesDayScreen({
     const [loading, setLoading] = useState(true);
     const [pending, setPending] = useState(false);
     const [error, setError] = useState("");
+    const [lookupFailed, setLookupFailed] = useState(false);
     const [date, setDate] = useState(() => localBusinessDate());
     const [cash, setCash] = useState<number | null>(0);
     const [refresh, setRefresh] = useState(0);
@@ -37,12 +38,14 @@ export function SalesDayScreen({
             .then((value) => {
                 if (!controller.signal.aborted) {
                     setDay(value);
+                    setLookupFailed(false);
                     setError("");
                     setLoading(false);
                 }
             })
             .catch((e) => {
                 if (!controller.signal.aborted) {
+                    setLookupFailed(true);
                     setError(describeError(e));
                     setLoading(false);
                 }
@@ -57,6 +60,7 @@ export function SalesDayScreen({
             !date ||
             cash === null ||
             loading ||
+            lookupFailed ||
             day
         )
             return;
@@ -117,6 +121,8 @@ export function SalesDayScreen({
                     <div>
                         {loading ? (
                             "Đang tải…"
+                        ) : lookupFailed ? (
+                            "Chưa xác định được trạng thái ngày bán"
                         ) : status ? (
                             <StatusBadge
                                 tone={
@@ -149,7 +155,7 @@ export function SalesDayScreen({
                     {error}
                 </p>
             )}
-            {day && !loading ? (
+            {day && !loading && !lookupFailed ? (
                 <dl className={styles.summary}>
                     <div>
                         <dt>Tiền đầu ngày</dt>
@@ -196,11 +202,21 @@ export function SalesDayScreen({
                     </Button>
                 </form>
             ) : null}
-            {!canManage && !loading && !day && (
+            {!canManage && !loading && !lookupFailed && !day && (
                 <p className={styles.notice}>Bạn không có quyền mở ngày bán.</p>
             )}
             {!loading && !day && error && canManage && (
-                <Button variant="outline" onClick={() => setError("")}>
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        if (lookupFailed) {
+                            setLoading(true);
+                            setRefresh((value) => value + 1);
+                        } else {
+                            setError("");
+                        }
+                    }}
+                >
                     Thử lại yêu cầu
                 </Button>
             )}
