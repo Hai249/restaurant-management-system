@@ -77,10 +77,10 @@ public sealed class CatalogEndpointTests
         var stub = new StubMenu();
         await using var app = await StartAsync(stub, SeededGrants());
         using var client = app.GetTestClient();
-        using var create = await client.SendAsync(Request(Mutations[0], "Admin"));
+        using var create = await client.SendAsync(Request(Mutations[0], "Manager"));
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         Assert.Equal($"/api/catalog/groups/{Id}", create.Headers.Location?.OriginalString);
-        using var removed = await client.SendAsync(Request(Mutations[^1], "Admin"));
+        using var removed = await client.SendAsync(Request(Mutations[^1], "Manager"));
         Assert.Equal(HttpStatusCode.NoContent, removed.StatusCode);
         foreach (var (code, status) in new[]
         {
@@ -94,7 +94,7 @@ public sealed class CatalogEndpointTests
         })
         {
             stub.Error = code;
-            using var response = await client.SendAsync(Request(Mutations[0], "Admin"));
+            using var response = await client.SendAsync(Request(Mutations[0], "Manager"));
             Assert.Equal(status, response.StatusCode);
             using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             Assert.Equal(code, json.RootElement.GetProperty("code").GetString());
