@@ -1,0 +1,68 @@
+name: Week 1 repeated SQL spike evidence
+on:
+  push:
+    branches: [test/hai-week1-spike-ci-20261119]
+    paths: [.github/workflows/week1-spike-evidence.yml]
+permissions:
+  contents: read
+jobs:
+  repeated-spike:
+    if: github.repository == 'Hai249/restaurant-management-system'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73
+        with:
+          global-json-file: global.json
+      - name: Start disposable SQL Server 2022
+        shell: bash
+        run: |
+          set -euo pipefail
+          password="$(openssl rand -hex 24)Aa1!"
+          echo "::add-mask::$password"
+          export MSSQL_SA_PASSWORD="$password"
+          docker run -d --name week1-spike-sql -p 127.0.0.1:1433:1433 -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD mcr.microsoft.com/mssql/server:2022-latest
+          echo "IDENTITY_TEST_SQLSERVER=Server=127.0.0.1,1433;User Id=sa;Password=$password;Encrypt=True;TrustServerCertificate=True;Connect Timeout=5;Command Timeout=120" >> "$GITHUB_ENV"
+          ready=false
+          for attempt in $(seq 1 90); do
+            if docker exec week1-spike-sql bash -c 'export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD"; /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -Q "SELECT 1"' >/dev/null 2>&1; then ready=true; break; fi
+            sleep 2
+          done
+          test "$ready" = true
+          mkdir -p TestResults
+          docker exec week1-spike-sql bash -c 'export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD"; /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -Q "SET NOCOUNT ON; SELECT CAST(SERVERPROPERTY(CHAR(80)+CHAR(114)+CHAR(111)+CHAR(100)+CHAR(117)+CHAR(99)+CHAR(116)+CHAR(86)+CHAR(101)+CHAR(114)+CHAR(115)+CHAR(105)+CHAR(111)+CHAR(110)) AS varchar(30));"' > TestResults/sql-version.txt
+          docker inspect --format '{{.Image}}' week1-spike-sql > TestResults/sql-image-id.txt
+      - name: Restore and build
+        run: |
+          dotnet restore RestaurantManagement.slnx --locked-mode
+          dotnet build tests/Restaurant.IntegrationTests -c Release --no-restore
+      - name: Run all nine Phuong scenarios twenty times
+        shell: bash
+        run: |
+          set -euo pipefail
+          for iteration in $(seq -w 1 20); do
+            dotnet test tests/Restaurant.IntegrationTests -c Release --no-build --no-restore --filter FullyQualifiedName~PhuongWeekOneSqlServerTests --logger 'trx;LogFileName=spike.trx' --results-directory "TestResults/spike-$iteration"
+          done
+      - name: Verify actual TRX counts
+        shell: pwsh
+        run: |
+          $reports = @(Get-ChildItem TestResults/spike-*/spike.trx)
+          if ($reports.Count -ne 20) { throw 'Expected twenty TRX reports' }
+          foreach ($report in $reports) {
+            [xml]$trx = Get-Content $report.FullName
+            $c = $trx.TestRun.ResultSummary.Counters
+            if ([int]$c.total -ne 9 -or [int]$c.passed -ne 9 -or [int]$c.failed -ne 0 -or [int]$c.notExecuted -ne 0) { throw 'A repetition failed or skipped tests' }
+          }
+          @{iterations=20;passedPerIteration=9;totalPassed=180;failed=0;skipped=0;status='PASS'} | ConvertTo-Json | Set-Content TestResults/spike-summary.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: week1-spike-twenty-runs
+          path: TestResults/
+          retention-days: 7
+      - name: Remove disposable SQL
+        if: always()
+        run: docker rm -f -v week1-spike-sql || true
