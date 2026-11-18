@@ -7,6 +7,8 @@
 
 > **Cập nhật 18/11/2026:** job `Publish images to GHCR` đã xanh trở lại ở `bafc457` và `restaurant-web` đã có tag; phần còn lại của tuần 1 chuyển sang mục 8. Các mục 1–7 giữ nguyên làm lịch sử của ngày 17/11.
 
+> **Đối chiếu bổ sung của Hải, 18/11:** [Bằng chứng GitHub](../evidence/week-one/github-controls-2026-11-18.md) xác nhận ruleset develop đã áp dụng đúng nhánh, một approval và hai required checks; TRX CI có đủ 9/9 test Phương Passed, không skip. PR thử #50 có required check đỏ, trạng thái blocked và đã đóng không merge. [Bằng chứng VPS](../evidence/week-one/vps-readonly-2026-11-18.md) và [ma trận INF](../test-strategy.md) ghi các phần đã/chưa xác minh. Những ghi chú cũ ở dưới không yêu cầu deploy/migrate lại. Browser E2E và nghiệm thu đồng thời hai IP chưa được kết luận PASS từ các bằng chứng trước.
+
 Quy ước kết quả: **ĐẠT** = đã chạy lệnh hoặc đọc nguồn công khai trong phiên này, kết quả ghi bên dưới. **CHƯA KIỂM CHỨNG** = cần người có quyền (VPS, tài khoản GitHub admin, hai địa chỉ IP) làm. **KHÔNG ĐẠT** = đã kiểm và sai.
 
 ## 1. Kết luận ngắn
@@ -128,13 +130,15 @@ Annotation của job chỉ ghi `Process completed with exit code 1.`; log chi ti
 
 ### S1 — Rate limiting
 
-- IP A `116.101.89.102`: 10 request login không hợp lệ nhận 400; request 11 nhận 429.
-- IP B `171.244.123.92`: 10 request nhận 400; request 11 nhận 429.
+- Nguồn IP A (đã ẩn địa chỉ): 10 request login không hợp lệ nhận 400; request 11 nhận 429.
+- Nguồn IP B (đã ẩn địa chỉ): 10 request nhận 400; request 11 nhận 429.
 - Thời gian kiểm thử IP B: 3,6 giây.
 - Hai IP công khai khác nhau đã được xác minh.
 - IP A không vượt được giới hạn khi giả mạo `X-Forwarded-For`.
 - **PASS:** giới hạn đăng nhập trên từng IP.
 - **CHƯA KIỂM CHỨNG:** tính độc lập đồng thời của hai IP trong cùng cửa sổ 60 giây.
+
+**Bổ sung kiểm tra đồng thời 18/11:** [bằng chứng mới](../evidence/week-one/rate-limit-concurrent-2026-11-18.md) **FAIL** kỳ vọng mỗi nguồn có hạn mức riêng: hai nguồn khác outbound IPv4 chỉ nhận tổng 10 request 400 trước 429, tái hiện sau thời gian nghỉ. Kết quả từng IP ở trên chỉ là lịch sử và không chứng minh tính độc lập; cần audit proxy đang chạy và kiểm tra lại sau sửa.
 
 ### S2 — Refresh token
 
