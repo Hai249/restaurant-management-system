@@ -120,31 +120,73 @@ Annotation của job chỉ ghi `Process completed with exit code 1.`; log chi ti
 | 4 | Hải ghi nhận xét review ADR-01 | Hải | Th 5 19/11 |
 | 5 | Sau khi S1–S4 đạt: đổi HIE-1.5b và HIE-1.5 từ `In Review` sang `Done` trong sổ tiến độ cục bộ của Hiếu | Hiếu | Th 5 19/11 |
 
-## 7. Bằng chứng staging (Hải điền)
+## 7. Bằng chứng staging — Hải, 18/11/2026
 
-```text
-Ngày giờ:
-Người chạy:
-Commit đang chạy trên VPS (docker inspect / tag image):
+**Staging:** https://staging.quanlynh.id.vn
 
-S1 (hai IP, 11 lần/phút):
-  lệnh:
-  kết quả:
+**Commit deploy:** `7de77d4cbd15deb474bab146ae6f14dd05937dbe`
 
-S2 (refresh 4 bước):
-  lệnh:
-  kết quả:
+### S1 — Rate limiting
 
-S3 (migration Seating + sao lưu):
-  lệnh:
-  tên tệp sao lưu:
-  kết quả:
+- IP A `116.101.89.102`: 10 request login không hợp lệ nhận 400; request 11 nhận 429.
+- IP B `171.244.123.92`: 10 request nhận 400; request 11 nhận 429.
+- Thời gian kiểm thử IP B: 3,6 giây.
+- Hai IP công khai khác nhau đã được xác minh.
+- IP A không vượt được giới hạn khi giả mạo `X-Forwarded-For`.
+- **PASS:** giới hạn đăng nhập trên từng IP.
+- **CHƯA KIỂM CHỨNG:** tính độc lập đồng thời của hai IP trong cùng cửa sổ 60 giây.
 
-S4 (image đang chạy):
-  kết quả:
-```
+### S2 — Refresh token
 
-Không dán mật khẩu, token hay `Set-Cookie` vào đây; che hoặc cắt trước khi ghi.
+Kiểm thử trực tiếp API trên staging:
+
+| Kiểm tra | HTTP |
+|---|---|
+| Login | 200 |
+| Refresh lần 1 | 200 |
+| Refresh lần 2 | 200 |
+| Replay cookie cũ | 401 |
+| Cookie mới nhất sau khi phiên bị thu hồi | 401 |
+
+- Cookie `rt` có HttpOnly, Secure, SameSite=Strict, Path=/api/identity.
+- Hai lần refresh đều xoay vòng cookie thành công.
+- Kết quả: `R9_3_REFRESH_FLOW_PASS`.
+- Sử dụng tài khoản staging hiện có; chưa xác minh là tài khoản test riêng.
+- Chưa thay thế cho kiểm thử E2E trình duyệt.
+- Không lưu mật khẩu hoặc token trong tài liệu.
+
+### S3 — Seating migration và backup
+
+- Backup trước triển khai: `RestaurantManagement_before_R8_20261118T030953Z.bak`.
+- SHA-256: `5f967ab6dcb561ecf29ed0819d8a6aeb6fb1f8e345e0210f7f57ff8ea9a3f858`.
+- Đã áp dụng `20261114224201_InitialSeating`.
+- Database có 31 user tables và 6 EF migrations.
+- Schema seating có 5 bảng nghiệp vụ và bảng lịch sử migration.
+- Migration idempotent chạy lại thành công.
+- SQL container không bị restart khi deploy.
+- **Kết quả: PASS.**
+
+### S4 — Staging deployment
+
+- API: `ghcr.io/trunghieu220504/restaurant-api:7de77d4cbd15deb474bab146ae6f14dd05937dbe`.
+- Web: `ghcr.io/trunghieu220504/restaurant-web:7de77d4cbd15deb474bab146ae6f14dd05937dbe`.
+- Hai container xác nhận đúng OCI revision.
+- `/`, `/health/live`, `/health/ready`: HTTP 200.
+- HTTP sang HTTPS: 301.
+- HSTS: `max-age=86400`.
+- API chạy non-root UID 1654.
+- API, web, SQL không publish cổng trực tiếp ra host.
+- Identity `/me` không bearer: 401.
+- Identity `/refresh` không cookie: 401.
+- **Kết quả: PASS.**
+
+### Phần còn mở
+
+- Xác minh rate limit hai IP độc lập trong cùng cửa sổ 60 giây.
+- Browser E2E W1-E01 đến W1-E06 cần phối hợp frontend.
+- ADR-01, quy tắc review và ruleset `develop` cần người phụ trách xác nhận.
+
+Không commit mật khẩu, refresh cookie hay bearer token.
 
 ## 8. Cập nhật 18/11/2026 (đối chiếu `develop` `bafc457`)
 
