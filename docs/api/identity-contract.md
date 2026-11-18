@@ -139,4 +139,4 @@ dotnet run --project src/Host/Restaurant.Api --launch-profile http
 Invoke-WebRequest http://localhost:5080/openapi/v1.json -OutFile docs/api/openapi.json
 ```
 
-Đường dẫn `/openapi/v1.json` đã được kiểm chứng ngày 10/11/2026. File xuất ra hiện gồm Identity, SalesDay và `/api/system/modules`.
+Đường dẫn `/openapi/v1.json` đã được kiểm chứng ngày 10/11/2026. File xuất ra hiện gồm Identity, Seating ([seating-contract.md](seating-contract.md)), SalesDay và `/api/system/modules`.
