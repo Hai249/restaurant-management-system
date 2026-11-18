@@ -2,7 +2,7 @@
 
 Phạm vi: việc tuần 1 còn lại, không triển khai nhiệm vụ mới tuần 2. Trạng thái dưới đây là tiến độ và bằng chứng, không thay approval/merge hoặc nghiệm thu toàn nhóm.
 
-Kết quả mới: [báo cáo tự động hóa 19/11](evidence/week-one/automation-2026-11-19.md) ghi nhận 227/227 backend trên SQL 2022, 48/48 frontend, 7/7 browser/API thật cục bộ, 6/6 browser staging không đăng nhập, quét đủ 65535 cổng TCP IPv4 bên ngoài và 20 × 9 test spike trên Docker SQL 2022. [Hướng dẫn chạy lại](week-one-automation.md) kèm script và bước sudo giới hạn. E2E staging có tài khoản vẫn BLOCKED; kết quả cục bộ không thay thế nghiệm thu staging.
+Kết quả mới: [báo cáo tự động hóa 19/11](evidence/week-one/automation-2026-11-19.md) ghi nhận 243/243 backend SQL 2022 Docker sau sửa lỗi Catalog, 71/71 frontend trên develop mới, 7/7 browser/API thật cục bộ trên mốc code đã ghi, 6/6 browser staging không đăng nhập, quét đủ 65535 cổng TCP IPv4 bên ngoài và 20 × 9 test spike. Lỗi Catalog phát hiện khi kiểm tra có [PR #69](https://github.com/Trunghieu220504/restaurant-management-system/pull/69) riêng, hồi quy 20 × 2 PASS, chưa merge/deploy. [Hướng dẫn chạy lại](week-one-automation.md) kèm script và bước sudo giới hạn. E2E staging có tài khoản vẫn BLOCKED; kết quả cục bộ không thay thế nghiệm thu staging.
 
 | Mục | Kết quả thực tế | Việc còn lại |
 |---|---|---|
