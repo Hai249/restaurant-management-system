@@ -1,5 +1,21 @@
 # Gia hạn chứng chỉ staging đang được Nginx sử dụng
 
+## Kết quả sau áp dụng ngày 18/11/2026
+
+Quản trị viên đã chạy plan/apply thành công lúc 13:48 UTC. Output script xác nhận ACME staging dry-run PASS, chứng chỉ thật không đổi, hook Nginx test/reload đạt và ready=200. Agent kiểm tra độc lập lúc 13:49–13:52 UTC: loaded ExecStart dùng đúng config/work/log dirs của dự án, cert-name và hook; hook root:root mode 700, drop-in root:root mode 644; timer enabled/active. HTTP 301 đến HTTPS, root/live/ready đều 200 với TLS verify=0; workstation ngoài VPS thấy HSTS max-age=86400. Bằng chứng bàn giao tại [PR #52](https://github.com/Trunghieu220504/restaurant-management-system/pull/52).
+
+INF06 PASS trong phạm vi thử gia hạn và cấu hình hiện tại. Chưa có kết luận lần renew production trong tương lai đã xảy ra. Backup/log riêng nằm trên VPS; không công khai key/log. [Issue #56](https://github.com/Trunghieu220504/restaurant-management-system/issues/56) còn theo dõi review/merge PR này.
+
+**Không chạy lại plan/apply trên staging hiện đã sửa**: guard sẽ dừng khi có drop-in. Các bước cài bên dưới ghi lại quy trình một lần; để kiểm tra hiện trạng dùng các lệnh chỉ đọc:
+
+```bash
+systemctl show certbot.service -p ExecStart --value
+systemctl is-enabled certbot.timer
+systemctl is-active certbot.timer
+systemctl list-timers certbot.timer --no-pager
+curl --fail --silent --show-error https://staging.quanlynh.id.vn/health/ready
+```
+
 ## Lỗi đã xác nhận ngày 18/11/2026
 
 Nginx mount `infra/certbot/conf` của bản triển khai tại `/home/deploy/restaurant-management-system`, gồm một lineage `staging.quanlynh.id.vn`. Cấu hình renewal dùng webroot host `infra/certbot/www`, đúng với mount của Nginx. Tuy nhiên, unit Certbot được đóng gói chạy `certbot -q renew --no-random-sleep-on-renew` với config-dir mặc định `/etc/letsencrypt`; thư mục renewal mặc định không có lineage nào. Không có drop-in hoặc cấu hình CLI chuyển sang thư mục dự án. Vì vậy timer enabled và lần chạy exit 0 chưa chứng minh chứng chỉ đang phục vụ sẽ được gia hạn.
