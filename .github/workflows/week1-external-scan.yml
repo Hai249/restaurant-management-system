@@ -1,0 +1,33 @@
+name: Week 1 external TCP evidence
+on:
+  push:
+    branches: [test/hai-week1-external-scan-20261118]
+    paths: [scripts/ScanWeekOnePorts.cs, .github/workflows/week1-external-scan.yml]
+permissions:
+  contents: read
+concurrency:
+  group: week1-external-tcp
+  cancel-in-progress: true
+jobs:
+  external-tcp:
+    if: github.repository == 'Hai249/restaurant-management-system'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73
+        with:
+          global-json-file: global.json
+      - name: Probe only the authorized staging VPS
+        env:
+          WEEK1_PORT_REPORT: port-report.json
+        run: dotnet run --file scripts/ScanWeekOnePorts.cs -c Release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: week1-external-tcp-evidence
+          path: port-report.json
+          if-no-files-found: error
+          retention-days: 7
