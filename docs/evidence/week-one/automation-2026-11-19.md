@@ -32,12 +32,14 @@ Lần kiểm tra mở rộng `automation-20261118T200340Z` trên develop `866e53
 | E2E staging có Manager + khóa tài khoản | **BLOCKED** — chưa tạo tài khoản, chưa xác nhận staging chỉ có dữ liệu thử | Người vận hành chạy plan/prepare bằng sudo trong [runbook tự động hóa](../../week-one-automation.md); agent chạy tự động và vô hiệu hóa đúng 3 tài khoản sau test |
 | SSH Match theo kết nối thật | **PARTIAL** — cấu hình tổng quát đạt | Plan script chuẩn bị E2E kiểm tra deploy/root với đúng SSH_CONNECTION; cần output thực tế trước khi đổi PASS |
 | Bảo vệ develop / merge methods | **Đề xuất sẵn, chưa áp dụng** | Chủ repo áp dụng [hai điều chỉnh cụ thể](../../github-week-one-controls.md). Tài khoản Hai249 không có admin |
-| Review/merge | **PR #52 đã APPROVED và merged**; #49/#54/#55/#57 còn mở tại lần đối chiếu | CI hai checks mới đã success sau đồng bộ; cần reviewer độc lập và merge. Bộ automation/báo cáo này cũng cần PR review |
+| Review/merge | **#52, #54 và #55 đã APPROVED và merged**. #54 squash thành `2c4b412`, #55 thành `149717a`; issue #53/#51 đã đóng bằng bằng chứng. #49/#57/#68/#69 còn mở | #49/#68/#69 cần reviewer độc lập. #57 có approval nhưng CI hiện tái hiện lỗi Catalog chưa vào develop; cần merge #69 trước, cập nhật nhánh và kiểm tra lại. Không merge khi required check đỏ |
 | Sửa lỗi Catalog phát hiện khi kiểm tra tương thích | **PR #69 đã sửa và tất cả checks PASS**, chưa merge/deploy | Chủ module review/merge riêng; lỗi chỉ được sửa trên develop sau khi PR được merge. PR #68 cung cấp harness, không chứa thay đổi nghiệp vụ này |
 | Kết luận spike và chiến lược nhóm | **Đã có bằng chứng kỹ thuật và review/merge tài liệu #52** | Không tự ký thay Phương hoặc tạo approval thay người khác; xem [review C03 hỗ trợ Hải](../../reviews/c03-hai-2026-11-19.md) |
 | Nguồn 4G / IPv6 nếu áp dụng tiêu chí INF02 đầy đủ | **Chưa có bằng chứng** | Kết quả hiện tại là external TCP IPv4, không sửa nhãn nguồn thành 4G |
 
 INF04/INF09 và các dòng PARTIAL khác trong [ma trận](../../test-strategy.md) vẫn giữ giới hạn theo bằng chứng. Không recreate SQL, bootstrap Admin hoặc khôi phục đè staging chỉ để đổi trạng thái. Chiến lược test/runbook đã được review và merge trong #52; không suy ra mọi ca tuần 1 đều PASS.
+
+CI #57 sau cập nhật develop: [run 44394568830](https://github.com/Trunghieu220504/restaurant-management-system/actions/runs/44394568830), TRX artifact `14468759389`, 86/87 PASS, đúng ca concurrent same-code của Catalog FAIL với wrapped deadlock, không timeout (đã tải và đọc TRX). Đây là cùng nguyên nhân đã được PR #69 sửa; không phải kết luận script certbot hoặc dry-run runtime thất bại. PR #57 và issue #56 giữ mở đến khi đủ điều kiện merge. Mọi kết quả PASS trong bảng vẫn gắn với commit/môi trường đã ghi; không thay nhãn lần CI đỏ này bằng kết quả lần trước.
 
 ## Script và thực hiện
 
