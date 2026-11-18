@@ -36,7 +36,6 @@ export default function KitchenPage() {
         startCookingItem,
         finishCookingItem,
         serveItem,
-        toggleDishStock,
         menuItems,
     } = useRestaurant();
 

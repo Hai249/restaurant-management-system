@@ -29,8 +29,7 @@ function GuestMenuContent() {
     const searchParams = useSearchParams();
     const tableParam = searchParams.get("table") || "T04";
 
-    const { tables, orders, menuItems, createOrder, salesDay } =
-        useRestaurant();
+    const { tables, orders, menuItems, createOrder } = useRestaurant();
 
     // Find table info
     const currentTable = tables.find((t) => t.id === tableParam) || tables[0];

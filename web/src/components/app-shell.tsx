@@ -6,7 +6,6 @@ import {
     Boxes,
     Menu,
     ReceiptText,
-    Store,
     LogOut,
     LayoutGrid,
     ChefHat,
@@ -74,26 +73,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                     sidebarOpen ? "translate-x-0" : "-translate-x-full",
                 )}
             >
-                <div className="flex h-16 items-center justify-between border-b px-4 font-semibold">
+                <div className="flex h-16 items-center border-b px-4 font-semibold">
                     <Link href="/" className="flex items-center gap-2.5">
                         <span className="grid size-8 place-items-center rounded-lg bg-red-500 text-white font-bold">
                             R
                         </span>
-                        <div>
-                            <span className="text-sm font-bold block leading-none">
-                                Restaurant OS
-                            </span>
-                            <span className="text-[10px] text-muted-foreground">
-                                Seoul Kitchen Quán
-                            </span>
-                        </div>
-                    </Link>
-                    <Link
-                        href="/stores"
-                        title="Đổi cửa hàng"
-                        className="p-1.5 text-xs text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                        <Store size={16} />
+                        <span className="text-sm font-bold">Restaurant OS</span>
                     </Link>
                 </div>
 
@@ -223,17 +208,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                         >
                             <Menu aria-hidden="true" className="size-5" />
                         </Button>
-
-                        {/* Current branch selector */}
-                        <Link
-                            href="/stores"
-                            className="text-xs font-semibold text-gray-800 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
-                        >
-                            <Store size={14} className="text-red-500" />
-                            <span className="truncate max-w-[120px] sm:max-w-none">
-                                Seoul Kitchen Quán
-                            </span>
-                        </Link>
 
                         {/* SalesDay Status pill */}
                         <Link
