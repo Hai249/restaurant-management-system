@@ -1,4 +1,6 @@
-# Rate limit đồng thời hai nguồn — FAIL, 18/11/2026
+# Rate limit đồng thời hai nguồn — PASS sau sửa, 18/11/2026
+
+Trạng thái hiện tại: **PASS phần hạn mức độc lập và chống giả mạo XFF**, kiểm lại 13:50 UTC sau sửa proxy. Các lượt FAIL bên dưới được giữ làm lịch sử tái hiện. Không thay cho kiểm tra khóa tài khoản hoặc E2E đăng nhập thật.
 
 Môi trường: `https://staging.quanlynh.id.vn`, image/SHA đang chạy cần đối chiếu lại qua audit VPS. Dùng hai nguồn: workstation ngoài VPS và curl chạy trên VPS qua SSH. Đối chiếu public outbound IPv4 qua dịch vụ kiểm tra IP trả kết quả hai nguồn khác nhau; địa chỉ cụ thể không được lưu vào repo.
 
@@ -27,3 +29,18 @@ Theo dõi sửa và kiểm lại tại [issue #51](https://github.com/Trunghieu2
 ## Kết quả audit runtime tiếp theo
 
 API/web đúng revision `7de77d4cbd15deb474bab146ae6f14dd05937dbe`. Environment API không có `ReverseProxy__KnownProxies__*`; địa chỉ Nginx đang là `172.18.0.3`, forwarded headers ở Nginx đã được overwrite đúng. [ReverseProxyConfiguration](../../../src/Host/Restaurant.Api/Configuration/ReverseProxyConfiguration.cs) đặt `ForwardedHeaders.None` khi danh sách proxy tin cậy rỗng; appsettings trong source không khai báo danh sách này. Đây là thiếu sót cấu hình phù hợp trực tiếp với hành vi dùng chung partition quan sát được. Cần đối chiếu mount/config providers và nhãn Compose thực tế trước sửa, sau đó phải retest hai nguồn cùng phép giả mạo X-Forwarded-For. Chưa thay cấu hình hoặc tuyên bố đã sửa lỗi.
+
+## Kiểm lại sau sửa — PASS
+
+Ngày 18/11/2026, audit 13:49 UTC thấy `ReverseProxy__KnownProxies__0=172.18.0.3`, đúng một địa chỉ Nginx runtime. Override đã có trên VPS, Nginx tiếp tục overwrite X-Forwarded-For thành remote_addr. API/web vẫn đúng revision và image ID trước sửa; không publish cổng trực tiếp. Theo dõi bản sửa tại [PR #55](https://github.com/Trunghieu220504/restaurant-management-system/pull/55).
+
+Đối chiếu lại public outbound IPv4 ngay trước phép thử: hai nguồn khác nhau; không in/lưu địa chỉ cụ thể. Cả hai bắt đầu cùng epoch 13:50:39 UTC, dùng cùng request JSON rỗng và script đã dùng để tái hiện:
+
+| Nguồn | Khoảng thời gian UTC | Chuỗi phản hồi | Kết quả |
+|---|---|---|---|
+| Workstation ngoài VPS | 13:50:39.190–13:50:43.934 | Request 1–10: 400; request 11: 429 | PASS |
+| VPS outbound qua SSH | 13:50:39–13:50:42 | Request 1–10: 400; request 11: 429 | PASS |
+
+Ngay sau khi hết hạn mức của workstation, gửi thêm 5 request, mỗi request đổi X-Forwarded-For sang một địa chỉ TEST-NET khác nhau (`203.0.113.1` đến `.5`): cả 5 đều 429. Header giả không tạo hạn mức mới trong phép thử. Không dùng credential, cookie hoặc tên tài khoản; không đổi SQL/SalesDay.
+
+Kết luận: lỗi chia chung hạn mức đã được sửa trong runtime quan sát được; kiểm tra độc lập đồng thời và chống bypass qua XFF đạt. Issue #51 còn theo dõi review/merge PR #55 theo điều kiện Done tuần 1. INF10 tổng thể là PARTIAL do khóa tài khoản chưa nghiệm thu, không đổi cả INF10 thành PASS.

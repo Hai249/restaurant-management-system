@@ -53,3 +53,16 @@ Quản trị viên cung cấp Docker labels/mounts; agent đọc file không bí
 - [PR #57](https://github.com/Trunghieu220504/restaurant-management-system/pull/57) chuẩn bị sửa lịch Certbot, có ACME staging dry-run trước khi đổi scheduler và hook Nginx test/reload. Bash syntax đạt cục bộ/VPS, SHA256 bản tải trùng nguồn. Quyền deploy không đọc được file certificate trong lineage; kiểm tra certificate và dry-run bằng root còn chờ, không cố đọc private key.
 
 Chưa thay runtime proxy hoặc scheduler Certbot trong các bước kiểm tra này; không ghi PASS trước apply và retest.
+
+## Sau áp dụng proxy và lịch gia hạn — kiểm tra 13:49–13:52 UTC
+
+Các kết quả sau thay thế trạng thái FAIL/chờ áp dụng của proxy và Certbot phía trên; giữ nguyên lịch sử điều tra:
+
+- Quản trị viên chạy plan/apply Certbot thành công, backup root-only tại `/var/backups/restaurant-week1-certbot/20261118T134845Z-195360`. Output script xác nhận ACME staging dry-run đạt, fingerprint chứng chỉ thật không đổi, hook Nginx test/reload đạt và ready=200. Đây là kết quả quản trị viên cung cấp, không đọc log riêng hoặc private key qua tài khoản deploy.
+- Agent kiểm tra độc lập `systemctl show certbot.service -p ExecStart`: lệnh đã nạp dùng config/work/log dirs dưới thư mục dự án, đúng cert-name staging và deploy hook `/usr/local/sbin/restaurant-staging-reload-certificate`; không còn chạy vào default renewal directory rỗng.
+- Hook là root:root mode 700, drop-in là root:root mode 644. Timer enabled/active; lịch kế tiếp hiển thị 19/11/2026 08:42:12 +07 tại thời điểm kiểm tra. Không ép renew thật ngay và không suy ra lần chạy production trong tương lai đã thành công.
+- HTTP root trả 301 đến đúng HTTPS. HTTPS root/live/ready đều 200, TLS verify=0. Từ workstation ngoài VPS, HTTPS root 200 và `Strict-Transport-Security: max-age=86400`. INF06 PASS theo phạm vi thử gia hạn/configuration và kết nối hiện tại.
+- Audit thấy API có đúng `ReverseProxy__KnownProxies__0=172.18.0.3`, trùng Nginx; override trên VPS chỉ thêm biến này. Nginx vẫn overwrite XFF/Proto. [Retest hai nguồn và spoofed XFF](rate-limit-concurrent-2026-11-18.md#kiểm-lại-sau-sửa--pass) đạt.
+- API image ID `sha256:06f2fc5738f57a1f49751816e21444b85ca394fd0f25cf17773120b416083318`, web `sha256:dc343676bf5d1edb45bb9692a1ea35efc5a7a63466f97c709a0c52aa36e5d60e` giữ nguyên; revision vẫn `7de77d4cbd15deb474bab146ae6f14dd05937dbe`. SQL image ID vẫn `sha256:cf8f0ab2ebe61feec2eed2629061a07d247f791c2a8ddda74a4ac9f06a291718`; cả ba đều running, host port bindings rỗng. Không có bằng chứng độc lập so sánh container ID/StartedAt trước/sau ngoài các guard của script sửa proxy; không khẳng định quá mức rằng đã tự kiểm toàn bộ các giá trị đó.
+
+Các issue #51/#56 đã có runtime đạt; vẫn cần review/merge PR #55/#57. Quét toàn dải/4G, SSH Match theo ngữ cảnh và E2E có dữ liệu/tài khoản test còn chưa đủ bằng chứng.

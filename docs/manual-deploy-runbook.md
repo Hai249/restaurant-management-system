@@ -18,14 +18,19 @@ Tài liệu hướng dẫn cho lần triển khai được phê duyệt trong t�
 
 ### Lệnh mẫu cho lần deploy đã được duyệt
 
-Chạy trên VPS từ đúng thư mục release có `infra/`. Các giá trị `APP_DIR`, digest mới/cũ và tên project phải được người vận hành điền từ hiện trạng; không đoán đường dẫn. Không chạy khối này chỉ để lấy bằng chứng tuần 1. Không in `docker compose config` đầy đủ vì cấu hình có secret đã nội suy.
+Chạy trên VPS sau khi đối chiếu lại labels/mounts. Danh sách dưới đây khớp nguồn Compose đã xác nhận cho staging ngày 18/11 và thêm override proxy đang dùng; nếu đường dẫn/topology thay đổi, phải review lại danh sách trước khi chạy. Người vận hành điền digest mới/cũ đã xác minh. Không chạy khối này chỉ để lấy bằng chứng tuần 1. Không in `docker compose config` đầy đủ vì cấu hình có secret đã nội suy. `sudo` chỉ giữ hai biến image không bí mật; không dựa vào việc sudo tự giữ các biến đã export.
 
 ```bash
+APP_DIR=/home/deploy/restaurant-management-system
+RELEASE_INFRA=/home/deploy/hai-r8-release-7de77d4cbd15/infra
 cd "$APP_DIR"
-COMPOSE=(sudo docker compose --project-name restaurant-staging --env-file infra/.env
-  -f infra/compose.backend.yml -f infra/compose.frontend.yml
-  -f infra/compose.backend.https.yml -f infra/compose.backend.ghcr.yml
-  -f infra/compose.frontend.ghcr.yml)
+# Nếu file override không tồn tại, dừng và đối chiếu cấu hình, không bỏ qua.
+test -f "$APP_DIR/infra/compose.week1-trusted-proxy.yml"
+COMPOSE=(sudo --preserve-env=GHCR_API_IMAGE,GHCR_WEB_IMAGE docker compose
+  --project-name restaurant-staging --project-directory "$APP_DIR/infra" --env-file "$APP_DIR/infra/.env"
+  -f "$APP_DIR/infra/compose.backend.yml" -f "$APP_DIR/infra/compose.backend.https.yml"
+  -f "$APP_DIR/infra/compose.frontend.yml" -f "$RELEASE_INFRA/compose.backend.ghcr.yml"
+  -f "$RELEASE_INFRA/compose.frontend.ghcr.yml" -f "$APP_DIR/infra/compose.week1-trusted-proxy.yml")
 # Ghi OLD_API_IMAGE/OLD_WEB_IMAGE từ image + digest đã xác minh trước đó.
 # Đặt NEW_API_IMAGE/NEW_WEB_IMAGE bằng ghcr.io/...@sha256:<digest đã duyệt>.
 export GHCR_API_IMAGE="$NEW_API_IMAGE" GHCR_WEB_IMAGE="$NEW_WEB_IMAGE"
@@ -62,5 +67,5 @@ curl --fail --silent --show-error https://staging.quanlynh.id.vn/health/ready
 ## Lưu ý cấu hình staging đã đối chiếu ngày 18/11/2026
 
 - APT periodic đã được bật lại và kiểm chứng 1/1, reboot=false theo [PR #54](https://github.com/Trunghieu220504/restaurant-management-system/pull/54). Việc này không thay cho kiểm tra log cập nhật hoặc xác nhận bản vá đã cài.
-- Trusted proxy đang thiếu trong runtime API; [PR #55](https://github.com/Trunghieu220504/restaurant-management-system/pull/55) thêm override đúng Nginx peer theo năm file Compose đang chạy. Nếu được áp dụng, giữ override này khi deploy API lần sau và xác minh lại IP khi Nginx bị recreate. Chưa áp dụng hoặc retest tại thời điểm ghi nhận.
-- Chứng chỉ Nginx mount ở `infra/certbot/conf` khác config-dir mặc định của timer Certbot; [PR #57](https://github.com/Trunghieu220504/restaurant-management-system/pull/57) cung cấp dry-run và bản sửa lịch/hook. Không coi `certbot.timer enabled` hoặc `renew` exit 0 là đủ, vì default renewal directory hiện không có lineage.
+- Trusted proxy đã được thêm bằng override của [PR #55](https://github.com/Trunghieu220504/restaurant-management-system/pull/55), retest hai nguồn đồng thời và spoofed XFF đạt lúc 13:50 UTC. Giữ override này trong danh sách Compose khi deploy API lần sau; xác minh lại peer IP khi Nginx bị recreate. Không dùng danh sách năm file gốc riêng lẻ để vô tình bỏ override.
+- [PR #57](https://github.com/Trunghieu220504/restaurant-management-system/pull/57) đã sửa lịch Certbot trỏ đến chứng chỉ Nginx mount trong thư mục dự án và thêm deploy hook root-owned để test/reload Nginx. ACME staging dry-run/hook đạt, chứng chỉ thật không đổi; loaded ExecStart và timer đã được kiểm chứng. Theo dõi log/lần renew thật kế tiếp trên VPS, không force-renew chỉ để tạo bằng chứng và không công khai log/key.
