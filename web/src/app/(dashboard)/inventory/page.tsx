@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useRestaurant } from "@/lib/store/restaurant-context";
 
 interface Ingredient {
     id: string;
@@ -84,7 +83,6 @@ const initialIngredients: Ingredient[] = [
 ];
 
 export default function InventoryPage() {
-    const { salesDay } = useRestaurant();
     const [activeTab, setActiveTab] = useState<
         "STOCK" | "IMPORT" | "COUNT" | "ADJUST"
     >("STOCK");
