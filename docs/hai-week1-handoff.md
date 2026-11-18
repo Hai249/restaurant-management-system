@@ -18,6 +18,8 @@ Phạm vi: việc tuần 1 còn lại, không triển khai nhiệm vụ mới tu
 
 GitHub: dùng thông tin đăng nhập Git đã lưu của Hai249, không ghi token. Có thể push nhánh fork và tạo PR; không có quyền admin ruleset. Giữ nguyên origin push bị vô hiệu hóa; không push trực tiếp develop/main.
 
-VPS: SSH khóa bằng deploy hoạt động. Sudo cần mật khẩu, deploy không truy cập trực tiếp Docker. [Script audit cố định](../scripts/restaurant-week1-audit.sh) đã chuẩn bị để quản trị viên kiểm tra/cài root-owned và cấp sudo chỉ đúng đường dẫn, không đối số. Chưa cấp quyền SQL write, deploy hoặc đổi firewall bằng script này.
+VPS: SSH khóa bằng deploy hoạt động. Quản trị viên đã cài root-owned và cấp sudo chỉ cho [script audit cố định](../scripts/restaurant-week1-audit.sh), không đối số; audit đã chạy thành công. Deploy vẫn không có quyền Docker chung hoặc SQL write/deploy/đổi firewall qua script này. Audit thấy thiếu biến KnownProxies ở API, Nginx có IP runtime khác mặc định compose mới. Đang cần đối chiếu nhãn Compose/mount để sửa cấu hình đúng nơi; không sửa code nghiệp vụ.
+
+[PR #54](https://github.com/Trunghieu220504/restaurant-management-system/pull/54) cung cấp script bật lại APT periodic 1/1, giữ reboot thủ công, có backup/rollback. Preview đã được kiểm tra; chưa coi auto-update đã sửa cho đến khi quản trị viên áp dụng và audit sau đó xác nhận.
 
 Không sửa lịch sử Git để xóa địa chỉ IP; bản cập nhật chỉ ẩn IP trong nội dung tài liệu hiện tại. Địa chỉ cũ vẫn có thể xem trong lịch sử/PR; chủ repo quyết định việc xử lý lịch sử nếu cần. Không có kết luận đã quét sạch secret toàn bộ lịch sử.

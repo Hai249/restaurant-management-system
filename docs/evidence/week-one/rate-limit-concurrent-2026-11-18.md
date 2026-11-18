@@ -23,3 +23,7 @@ Lượt xác minh xen giữa gặp SSH timeout trong khi quét cổng nên khôn
 Mức đề xuất S2; cần Hiếu/Hải đối chiếu cấu hình proxy rồi sửa theo PR/kế hoạch triển khai phù hợp. Không thay module Identity hoặc deploy lại chỉ để che kết quả. Sau sửa phải chạy lại cùng phép thử và kiểm tra giả mạo X-Forwarded-For không vượt giới hạn.
 
 Theo dõi sửa và kiểm lại tại [issue #51](https://github.com/Trunghieu220504/restaurant-management-system/issues/51).
+
+## Kết quả audit runtime tiếp theo
+
+API/web đúng revision `7de77d4cbd15deb474bab146ae6f14dd05937dbe`. Environment API không có `ReverseProxy__KnownProxies__*`; địa chỉ Nginx đang là `172.18.0.3`, forwarded headers ở Nginx đã được overwrite đúng. [ReverseProxyConfiguration](../../../src/Host/Restaurant.Api/Configuration/ReverseProxyConfiguration.cs) đặt `ForwardedHeaders.None` khi danh sách proxy tin cậy rỗng; appsettings trong source không khai báo danh sách này. Đây là thiếu sót cấu hình phù hợp trực tiếp với hành vi dùng chung partition quan sát được. Cần đối chiếu mount/config providers và nhãn Compose thực tế trước sửa, sau đó phải retest hai nguồn cùng phép giả mạo X-Forwarded-For. Chưa thay cấu hình hoặc tuyên bố đã sửa lỗi.

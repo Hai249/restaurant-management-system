@@ -17,3 +17,17 @@ Chưa hoàn tất quét cổng ngoài, xử lý cấu hình auto-update đang t�
 Một phép quét TCP toàn dải được khởi động sau đó nhưng đã dừng trước khi hoàn tất khi SSH timeout; không có kết quả toàn dải để nghiệm thu. Sau dừng, HTTPS root 200 và SSH kết nối lại thành công. Không suy ra nguyên nhân timeout là do scanner khi chưa có log/đối chiếu mạng.
 
 Theo dõi cấu hình auto-update tại [issue #53](https://github.com/Trunghieu220504/restaurant-management-system/issues/53).
+
+## Audit trực tiếp sau khi cấp quyền giới hạn
+
+Đã chạy thành công bản root-owned `/usr/local/sbin/restaurant-week1-audit` qua `sudo -n`, không dùng mật khẩu trong công cụ:
+
+- SSH tổng quát vẫn root/password/kbd-interactive=no, pubkey=yes; UFW active, chỉ có rule allow 22/80/443 trong output.
+- Jail sshd ghi 23 lần ban tổng cộng, hiện tại 0 ban; không lưu địa chỉ máy khách.
+- Hai cờ APT periodic vẫn 0; [PR #54](https://github.com/Trunghieu220504/restaurant-management-system/pull/54) chuẩn bị script sửa có backup/rollback. Preview APT ngoài `/etc` đã trả 1/1/false, nhưng chưa áp dụng thật hoặc đóng issue #53.
+- API và web có OCI revision đúng `7de77d4cbd15deb474bab146ae6f14dd05937dbe`, không có host port bindings; SQL không có host port bindings. HTTP live/ready kiểm lại đều 200.
+- API image id `sha256:06f2fc5738f57a1f49751816e21444b85ca394fd0f25cf17773120b416083318`; web `sha256:dc343676bf5d1edb45bb9692a1ea35efc5a7a63466f97c709a0c52aa36e5d60e`. Đây là image id runtime, không mặc định là registry manifest digest. Không thấy Docker health object trong output inspect, không suy ra healthcheck container đã được cấu hình.
+- Không có biến `ReverseProxy__KnownProxies__*` trong environment API; Nginx runtime có địa chỉ nội bộ `172.18.0.3` và đã đặt X-Forwarded-For thành remote_addr, X-Forwarded-Proto thành scheme. Đối chiếu thêm nhãn Compose/mount trước khi thay runtime; không tin toàn bộ proxy hoặc mở API ra host.
+- Timer certbot enabled nhưng audit không tìm thấy renewal `.conf` trong `/etc/letsencrypt/renewal`. Cần đối chiếu mount của Nginx và config-dir/cli.ini thực tế trước khi kết luận cơ chế renewal đang quản lý đúng chứng chỉ hoặc chạy dry-run.
+
+Quyền được cấp chỉ chạy audit cố định; không cho phép sửa APT/proxy, deploy hoặc ghi SQL. Các thay đổi hệ thống vẫn cần quản trị viên thực hiện đúng script/lệnh đã chuẩn bị.
