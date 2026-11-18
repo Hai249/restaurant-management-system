@@ -2,9 +2,28 @@ name: Web CI
 
 on:
   push:
-    branches: [main, develop, "feature/**", "fix/**", "chore/**", "docs/**", "hotfix/**"]
+    branches:
+      [
+        main,
+        develop,
+        "feature/**",
+        "fix/**",
+        "chore/**",
+        "docs/**",
+        "hotfix/**",
+      ]
+    paths:
+      - "web/**"
+      - "infra/compose.frontend.yml"
+      - "docs/api/**"
+      - ".github/workflows/web-ci.yml"
   pull_request:
     branches: [main, develop]
+    paths:
+      - "web/**"
+      - "infra/compose.frontend.yml"
+      - "docs/api/**"
+      - ".github/workflows/web-ci.yml"
   workflow_dispatch:
 
 permissions:
@@ -79,4 +98,32 @@ jobs:
 
       - name: Build Next.js application
         working-directory: web
+        env:
+          NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED: "true"
         run: npm run build
+
+      - name: Build frontend image with refresh enabled
+        run: docker build --build-arg NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED=true --tag restaurant-web:ci web
+
+      - name: Install smoke test browser
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Start frontend image
+        run: docker run --detach --name web-refresh-smoke --publish 127.0.0.1:3100:3000 restaurant-web:ci
+
+      - name: Verify refresh in compiled image browser bundle
+        working-directory: web
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3100
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent "$PLAYWRIGHT_BASE_URL/login" >/dev/null; then break; fi
+            sleep 2
+          done
+          curl --fail --silent "$PLAYWRIGHT_BASE_URL/login" >/dev/null
+          npm run test:e2e:production
+
+      - name: Remove frontend smoke container
+        if: always()
+        run: docker rm --force web-refresh-smoke || true

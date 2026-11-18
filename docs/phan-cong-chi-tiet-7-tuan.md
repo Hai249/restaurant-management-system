@@ -5,8 +5,8 @@
 > trong `superpowers/specs/2026-11-05-restaurant-mvp-scope.md` và các quyết định C01–C06 đã duyệt
 > (mục 3) được ưu tiên.
 >
-> **Cập nhật 11/11/2026:** nhóm đã bắt đầu làm từ 09/11. Bảng "Tiến độ thực tế" ở đầu mục 6 ghi lại phần đã có trên GitHub
-> (kiểm tra ngày 11/11); các nội dung kế hoạch bên dưới giữ nguyên mục tiêu, chỉ sửa chỗ đã khác thực tế.
+> **Cập nhật 17/11/2026:** đối chiếu mã nguồn `origin/develop` tại `6ec9a93`. Bảng hiện trạng dưới đây cập nhật phần Auth/Frontend/hạ tầng đã merge; chưa thay thế nghiệm thu staging. Kết quả, bằng chứng và đề xuất ước lượng tuần 2 ở [biên bản nghiệm thu](week-one-acceptance.md).
+> Các bảng giao việc theo ngày bên dưới giữ lịch mục tiêu ban đầu để đối chiếu tiến độ.
 
 ## 1. Mục tiêu, giả định và giới hạn
 
@@ -31,13 +31,13 @@ thông báo âm thanh → giao món → thu tiền → đóng order → đếm t
 
 | Hạng mục | Hiện trạng |
 |---|---|
-| Backend | .NET 10, 10 module × 4 project, 64 test (theo identity-authentication.md), CI build/test/publish |
-| Identity | Có login, me, logout, change-password; JWT 15 phút; **chưa có refresh token**, chưa có API quản lý tài khoản, chưa có policy theo quyền. Đã seed 5 vai trò (Admin, Manager, Staff, Kitchen, Bar) và 26 mã quyền |
+| Backend | .NET 10, kiến trúc 10 module; số test lịch sử xem `shared-foundation-handoff.md`, lần này không chạy lại backend |
+| Identity | Có login, me, logout, change-password và refresh xoay vòng (PR #26); đổi mật khẩu thu hồi mọi phiên. Policy quyền đã merge PR #39; API quản lý tài khoản còn là công việc tiếp theo. Chưa nghiệm thu Auth đầy đủ trên staging |
 | SalesDay, Catalog | Đã có (PR #16, merge 10/11): SalesDay có migration, `GET /api/salesday/current`, `POST /api/salesday/open` (quyền `salesday.manage`, `Idempotency-Key`); Catalog có migration 9 bảng, chưa có API |
-| 7 module còn lại (Seating, Sales, Fulfillment, Billing, Inventory, Reporting, Audit) | Khung rỗng (DbContext, nhóm endpoint trống), chưa có entity/migration |
-| Frontend | Có khung `web/` trên `develop` (Next.js 16, shadcn/ui, bảng, form, toast, trang 403/404, Playwright, MSW, `npm run gen:api`); **chưa có đăng nhập**, dữ liệu trên màn hình còn là mẫu. Phần realtime/âm thanh/màn mở ngày của Duy nằm ở PR #17 (đang mở) |
-| Triển khai | Chưa có Dockerfile, compose, CD, workflow cho `web/` trên `develop`. Host không tự migrate; có lệnh `--bootstrap-admin` |
-| Git | Repo **công khai** trên GitHub; `main` và `develop` **chưa được bảo vệ**. PR #7, #8 (Identity) đã merge vào `develop` (05/11). File build (`bin/obj/artifacts`) đã được `.gitignore`, không bị track |
+| Seating và 6 module còn lại | Seating có migration (PR #38); Sales, Fulfillment, Billing, Inventory, Reporting, Audit chưa được nghiệm thu nghiệp vụ trong lần đối chiếu này |
+| Frontend | Có lock file, khung Next.js, Auth thật và SalesDay API (PR #17, #24, #27 đã merge), OpenAPI từ file và CI kiểm tra lệch. Các trang prototype khác vẫn dùng mock; Auth còn chờ nghiệm thu staging |
+| Triển khai | Đã có Dockerfile API/web, compose và Web CI (PR #23, #31). Lần sửa này bổ sung cờ refresh lúc build và smoke image. Chưa thấy workflow publish/deploy web; chưa xác nhận image staging là bản mới nhất |
+| Git | Có main/develop và lịch sử PR đã merge; chưa kiểm tra trực tiếp branch protection trong lần sửa này |
 | Thiết kế dữ liệu | `2026-11-05-database-revised-design.md`; C01–C06 đã duyệt (mục 3) nhưng DDL vật lý và test ma trận chưa chạy |
 
 ## 3. Quyết định đã chốt
@@ -163,21 +163,21 @@ Cột "Xong khi" là tiêu chí kiểm tra được. Mọi nhiệm vụ backend 
 
 ### Tuần 1 (09/11 – 15/11): Nền móng, hạ tầng, khóa quyết định
 
-**Tiến độ thực tế (kiểm tra trên GitHub ngày 11/11/2026; "Đã merge" chỉ nghĩa là có trên `develop`, chưa phải nghiệm thu):**
+**Tiến độ thực tế (đối chiếu lịch sử git và code ngày 17/11/2026; đã merge không đồng nghĩa đã nghiệm thu):**
 
 | ID | Trạng thái | Căn cứ / việc còn lại |
 |---|---|---|
 | HIE-1.1 | Đã xong | PR #7, #8 đã merge vào `develop` ngày 05/11. Còn dọn nhánh cũ đã merge (xem "Dọn nhánh" ở mục Git) |
-| API Identity (hợp đồng + OpenAPI) | Chờ push/PR | Commit `e5cdc04` trên nhánh `docs/identity-api-contract`: `docs/api/openapi.json`, `docs/api/identity-contract.md`, khai báo kiểu response. Đã quá hạn 10/11 17:00 vì chưa push |
-| HIE-1.2, HIE-1.3, HIE-1.4, HIE-1.5 | Chưa bắt đầu (theo GitHub) | Không có nhánh hay PR |
-| PHU-1.1 (spike C03) | Đã merge, **chưa nghiệm thu** | PR #16. `docs/spike-c03-result.md`: 5/5 test đạt trên SQL Server 2022 Docker, chạy ở máy Phương. **Chưa chạy trên CI**: bộ lọc CI hiện chỉ chọn `IdentitySqlServer` (HAI-1.3 cần mở rộng) |
+| API Identity (hợp đồng + OpenAPI) | Đã merge | PR #18 (`37507b6`); hợp đồng refresh đã cập nhật; generator đọc `docs/api/openapi.json` |
+| HIE-1.2, HIE-1.3, HIE-1.4, HIE-1.5 | Đã merge | PR #36 (nền tảng), #26 (refresh), #39 (policy), #38 (Seating migration); forwarded headers PR #37. E2E staging chưa xác nhận |
+| PHU-1.1 (spike C03) | Đã merge, chờ đối chiếu nghiệm thu | PR #16, #28; backend CI hiện lọc mọi test có `SqlServer`. Bằng chứng kiểm thử đã ghi ở `shared-foundation-handoff.md`; lần này không chạy lại SQL |
 | PHU-1.2 (SalesDay) | Đã merge, **chưa nghiệm thu** | PR #16. Hợp đồng ở `docs/phuong-tuan-1.md`; mã lỗi có `code` (ví dụ `salesday.previous_not_closed`) |
 | PHU-1.3 (Catalog) | Đã merge, **chưa nghiệm thu** | PR #16. Migration 9 bảng; chưa có API (để tuần 2) |
-| BAO-1.1, BAO-1.3 | Phần lớn đã merge | Khung `web/` trên `develop` (commit 8fde101). Còn thiếu: `package-lock.json` (đang nằm trong PR #17), workflow CI cho `web/` |
-| BAO-1.2 | Một phần | Có script `npm run gen:api` (đọc `${API_URL}/openapi/v1.json`). Chưa có file OpenAPI trong repo (nằm trong commit `e5cdc04`), chưa có CI báo lệch |
-| BAO-1.4 | Chưa bắt đầu (theo GitHub) | Chưa có đăng nhập; `PermissionProvider` còn nhận danh sách quyền rỗng |
-| DUY-1.1, DUY-1.2, DUY-1.3 | PR #17 đang mở | Realtime, âm thanh, thành phần vận hành, màn mở ngày (trên mock). PR này sửa cả `web/next.config.ts`, `web/package.json`, `web/tsconfig.json`, `web/eslint.config.mjs` là file cấu hình thuộc Bảo Anh: cần Bảo Anh duyệt |
-| HAI-1.x | Chưa thấy trên GitHub | Chưa có Dockerfile, compose, workflow mới hay thay đổi bảo vệ nhánh. Có thể Hải đang làm cục bộ hoặc trên VPS; cần Hải cập nhật sổ tiến độ |
+| BAO-1.1, BAO-1.3 | Đã có trên develop | Khung, lock file và Web CI đã có; vẫn cần review/nghiệm thu giao diện của nhóm |
+| BAO-1.2 | Đã triển khai, đã kiểm tra cơ chế chặn lệch cục bộ | Generator dùng `docs/api/openapi.json`; thử OpenAPI lệch làm bước diff của CI trả 1, bản chuẩn trả 0. Xem `baoanh-auth-verification.md`; chưa chạy CI remote mới |
+| BAO-1.4 | Đã triển khai, chưa nghiệm thu staging | 48 unit test và 17 browser production test với API mock đạt; sửa refresh đến muộn, kiểm tra menu/route quyền. Bundle staging còn thiếu cờ build ở lần kiểm tra trước; xem `baoanh-auth-verification.md` và `week-one-acceptance.md` |
+| DUY-1.1, DUY-1.2, DUY-1.3 | Đã merge | PR #17 (`a13992e`); PR #24 nối màn `/sales-day` với API thật. Mock E2E không phải bằng chứng staging |
+| HAI-1.x | Đã có một phần trong repo | Docker/compose, Web CI và chiến lược test đã merge. Cần Hải xác nhận image staging, publish/deploy, branch protection và bằng chứng hạ tầng; không đánh dấu hoàn tất chung |
 
 Các dòng bên dưới là kế hoạch gốc; xem bảng trên để biết việc nào đã làm.
 
@@ -482,6 +482,6 @@ Tuần 1–5 mỗi người có 5 tuần. **Ước lượng này vượt công s
 - Nhà cung cấp và cấu hình VPS cụ thể, ngân sách, và việc tên miền `.id.vn` cho phép đổi nameserver sang Cloudflare (nếu nhà đăng ký không cho, phương án thay thế: trỏ bản ghi A từ DNS của nhà đăng ký và dùng chứng chỉ Let's Encrypt trên Nginx, bỏ proxy Cloudflare; khi đó `img.` cần xem lại).
 - Dung lượng RAM thực tế của SQL Server cùng API trên VPS đã chọn; chưa đo. Giới hạn hiện hành của SQL Server Express cũng cần được nhóm kiểm tra lại.
 - Tiến độ thuê VPS: kế hoạch tuần 1 giả định VPS có trước 12:00 thứ Hai và sẵn sàng dùng ngay thứ Ba. Một số nhà cung cấp cần xác minh thanh toán/danh tính nên có thể trễ; chưa kiểm chứng với nhà cung cấp nào.
-- Cấu hình Nginx + Let's Encrypt, SQL Server trong Docker và Next.js standalone chưa được dựng thử trong repo này; thời lượng "thứ Tư có API, thứ Năm có web" là ước lượng.
+- Đã có Dockerfile/compose/Nginx trong repo; kiểm tra staging ngày 17/11 ghi ở `week-one-acceptance.md`. HTTPS trả 200 không chứng minh bản deploy mới nhất hoặc toàn bộ cấu hình hạ tầng đã nghiệm thu.
 - Chưa đo tải realtime/WebSocket; sẽ đo ở HAI-4.1 trên chính VPS.
-- Ma trận 17 test chưa chạy đầy đủ cho module nào. Identity có test SQL Server trên CI; SalesDay/Catalog có 5 test SQL của Phương nhưng CI chưa chạy chúng.
+- Ma trận 17 test chưa được nghiệm thu đầy đủ trong lần đối chiếu này. CI hiện chọn mọi test `SqlServer`, gồm PhuongWeekOne; kết quả và bằng chứng lịch sử cần đối chiếu `spike-c03-result.md` và `shared-foundation-handoff.md`.

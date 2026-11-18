@@ -9,6 +9,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ARG API_URL=http://api:8080
 ENV API_URL=${API_URL}
+# NEXT_PUBLIC_* values are embedded in browser bundles during next build.
+ARG NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED=true
+ENV NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED=${NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED}
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN mkdir -p public && npm run build
 
