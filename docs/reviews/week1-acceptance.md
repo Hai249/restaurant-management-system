@@ -7,6 +7,8 @@
 
 > **Cập nhật 18/11/2026:** job `Publish images to GHCR` đã xanh trở lại ở `bafc457` và `restaurant-web` đã có tag; phần còn lại của tuần 1 chuyển sang mục 8. Các mục 1–7 giữ nguyên làm lịch sử của ngày 17/11.
 
+> **Đối chiếu bổ sung của Hải, 18/11:** [Bằng chứng GitHub](../evidence/week-one/github-controls-2026-11-18.md) xác nhận ruleset develop đã áp dụng đúng nhánh, một approval và hai required checks; TRX CI có đủ 9/9 test Phương Passed, không skip. PR thử #50 có required check đỏ, trạng thái blocked và đã đóng không merge. [Bằng chứng VPS](../evidence/week-one/vps-readonly-2026-11-18.md) và [ma trận INF](../test-strategy.md) ghi các phần đã/chưa xác minh. Những ghi chú cũ ở dưới không yêu cầu deploy/migrate lại. Browser E2E và nghiệm thu đồng thời hai IP chưa được kết luận PASS từ các bằng chứng trước.
+
 Quy ước kết quả: **ĐẠT** = đã chạy lệnh hoặc đọc nguồn công khai trong phiên này, kết quả ghi bên dưới. **CHƯA KIỂM CHỨNG** = cần người có quyền (VPS, tài khoản GitHub admin, hai địa chỉ IP) làm. **KHÔNG ĐẠT** = đã kiểm và sai.
 
 ## 1. Kết luận ngắn
@@ -128,13 +130,15 @@ Annotation của job chỉ ghi `Process completed with exit code 1.`; log chi ti
 
 ### S1 — Rate limiting
 
-- IP A `116.101.89.102`: 10 request login không hợp lệ nhận 400; request 11 nhận 429.
-- IP B `171.244.123.92`: 10 request nhận 400; request 11 nhận 429.
+- Nguồn IP A (đã ẩn địa chỉ): 10 request login không hợp lệ nhận 400; request 11 nhận 429.
+- Nguồn IP B (đã ẩn địa chỉ): 10 request nhận 400; request 11 nhận 429.
 - Thời gian kiểm thử IP B: 3,6 giây.
 - Hai IP công khai khác nhau đã được xác minh.
 - IP A không vượt được giới hạn khi giả mạo `X-Forwarded-For`.
 - **PASS:** giới hạn đăng nhập trên từng IP.
 - **CHƯA KIỂM CHỨNG:** tính độc lập đồng thời của hai IP trong cùng cửa sổ 60 giây.
+
+**Bổ sung kiểm tra đồng thời 18/11:** [bằng chứng mới](../evidence/week-one/rate-limit-concurrent-2026-11-18.md) **FAIL** kỳ vọng mỗi nguồn có hạn mức riêng: hai nguồn khác outbound IPv4 chỉ nhận tổng 10 request 400 trước 429, tái hiện sau thời gian nghỉ. Kết quả từng IP ở trên chỉ là lịch sử và không chứng minh tính độc lập; cần audit proxy đang chạy và kiểm tra lại sau sửa.
 
 ### S2 — Refresh token
 
@@ -217,3 +221,22 @@ Nguồn: API công khai của GitHub (`/actions/runs`, `/rulesets`, `/branches`,
 | 5 | Phương: lặp mỗi kịch bản ≥ 20 lần, kết luận ĐẠT/KHÔNG ĐẠT trong `spike-c03-result.md` kèm người ký (N4) | Phương, Hải | **Còn mở** |
 | 6 | Review PR #41 (BAO-1.4). Người duyệt chính theo kế hoạch là Duy; PR sửa `.github/workflows/web-ci.yml`, `web/Dockerfile` và `infra/compose.frontend.yml` nên Hiếu hoặc Hải cần duyệt phần đó | Duy; Hiếu hoặc Hải | **Còn mở** |
 | 7 | Sau khi S1–S4 đạt: đổi HIE-1.5b và HIE-1.5 từ `In Review` sang `Done` trong sổ tiến độ cục bộ; HIE-1.2 chỉ đổi khi Hải review xong | Hiếu | Chờ mục 3 và 4 |
+
+## 9. Kiểm tra staging bên ngoài ngày 18/11/2026 (chỉ gọi qua HTTPS)
+
+Người chạy: Claude, thay mặt Hiếu, bằng `curl` từ máy Hiếu, dùng một tài khoản kiểm thử vai trò `Admin` do Hải cấp. Không vào VPS, không dùng hai địa chỉ IP. Không ghi mật khẩu, token hay cookie vào đây. Mốc `develop` lúc kiểm: `9a5d871`. Không biết image đang chạy trên VPS là commit nào (S4 chưa kiểm chứng).
+
+| Mục | Kết quả | Bằng chứng |
+|---|---|---|
+| `/health/ready`, `/health/live` | ĐẠT | Cả hai trả 200. |
+| Header HSTS | ĐẠT | `Strict-Transport-Security: max-age=86400`, nên bản có PR #43 đã chạy. |
+| Đăng nhập | ĐẠT | `POST /api/identity/login` trả 200 và cookie `rt`. |
+| **S2 refresh 4 bước** | **ĐẠT** | Refresh lần 1: 200. Lần 2: 200. Dùng lại secret cũ: 401. Refresh bằng secret mới nhất sau đó: 401 (cả phiên bị thu hồi). Đúng chuỗi 200, 200, 401, 401. |
+| Không token gọi `/api/identity/me` | ĐẠT | 401. |
+| `POST /api/identity/logout` | ĐẠT | 204. |
+| `GET /api/salesday/current` | ĐẠT | 200, thân rỗng (chưa có ngày bán đang mở). |
+| **Seating API trên staging** | **KHÔNG ĐẠT** | `GET /api/seating/board`, `/areas`, `/tables` với token hợp lệ đều trả **404**. Tài khoản `Admin` chỉ có `identity.accounts.manage` và `identity.roles.manage`; nếu route tồn tại thì kết quả phải là 403. Vậy image đang chạy chưa chứa PR #58. |
+
+**Lưu ý về phép thử:** gọi không có token và nhận 401 **không** chứng minh route tồn tại, vì middleware xác thực cũng trả 401 cho đường dẫn không có thật. Chỉ phép thử có token (404 ở trên) mới có giá trị.
+
+Chưa kiểm chứng sau lần kiểm này: S1 (hai IP, 11 lần/phút), S3 (migration Seating và sao lưu), S4 (commit đang chạy), mọi thao tác Seating thật (cần tài khoản `Manager` hoặc `Staff`). Hải cần deploy lại `develop` mới nhất; sau đó chạy lại `GET /api/seating/board` với tài khoản `Staff` hoặc `Manager`, kết quả đúng là 200, và với `Admin` là 403.
