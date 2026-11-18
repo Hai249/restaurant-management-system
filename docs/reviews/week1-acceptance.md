@@ -221,3 +221,22 @@ Nguồn: API công khai của GitHub (`/actions/runs`, `/rulesets`, `/branches`,
 | 5 | Phương: lặp mỗi kịch bản ≥ 20 lần, kết luận ĐẠT/KHÔNG ĐẠT trong `spike-c03-result.md` kèm người ký (N4) | Phương, Hải | **Còn mở** |
 | 6 | Review PR #41 (BAO-1.4). Người duyệt chính theo kế hoạch là Duy; PR sửa `.github/workflows/web-ci.yml`, `web/Dockerfile` và `infra/compose.frontend.yml` nên Hiếu hoặc Hải cần duyệt phần đó | Duy; Hiếu hoặc Hải | **Còn mở** |
 | 7 | Sau khi S1–S4 đạt: đổi HIE-1.5b và HIE-1.5 từ `In Review` sang `Done` trong sổ tiến độ cục bộ; HIE-1.2 chỉ đổi khi Hải review xong | Hiếu | Chờ mục 3 và 4 |
+
+## 9. Kiểm tra staging bên ngoài ngày 18/11/2026 (chỉ gọi qua HTTPS)
+
+Người chạy: Claude, thay mặt Hiếu, bằng `curl` từ máy Hiếu, dùng một tài khoản kiểm thử vai trò `Admin` do Hải cấp. Không vào VPS, không dùng hai địa chỉ IP. Không ghi mật khẩu, token hay cookie vào đây. Mốc `develop` lúc kiểm: `9a5d871`. Không biết image đang chạy trên VPS là commit nào (S4 chưa kiểm chứng).
+
+| Mục | Kết quả | Bằng chứng |
+|---|---|---|
+| `/health/ready`, `/health/live` | ĐẠT | Cả hai trả 200. |
+| Header HSTS | ĐẠT | `Strict-Transport-Security: max-age=86400`, nên bản có PR #43 đã chạy. |
+| Đăng nhập | ĐẠT | `POST /api/identity/login` trả 200 và cookie `rt`. |
+| **S2 refresh 4 bước** | **ĐẠT** | Refresh lần 1: 200. Lần 2: 200. Dùng lại secret cũ: 401. Refresh bằng secret mới nhất sau đó: 401 (cả phiên bị thu hồi). Đúng chuỗi 200, 200, 401, 401. |
+| Không token gọi `/api/identity/me` | ĐẠT | 401. |
+| `POST /api/identity/logout` | ĐẠT | 204. |
+| `GET /api/salesday/current` | ĐẠT | 200, thân rỗng (chưa có ngày bán đang mở). |
+| **Seating API trên staging** | **KHÔNG ĐẠT** | `GET /api/seating/board`, `/areas`, `/tables` với token hợp lệ đều trả **404**. Tài khoản `Admin` chỉ có `identity.accounts.manage` và `identity.roles.manage`; nếu route tồn tại thì kết quả phải là 403. Vậy image đang chạy chưa chứa PR #58. |
+
+**Đính chính mục 8 và phần trả lời trước đó:** ghi nhận "route Seating tồn tại vì không token trả 401" là **sai**. Middleware xác thực cũng trả 401 cho đường dẫn không có thật. Chỉ kết quả có token (404) mới có giá trị.
+
+Chưa kiểm chứng sau lần kiểm này: S1 (hai IP, 11 lần/phút), S3 (migration Seating và sao lưu), S4 (commit đang chạy), mọi thao tác Seating thật (cần tài khoản `Manager` hoặc `Staff`). Hải cần deploy lại `develop` mới nhất; sau đó chạy lại `GET /api/seating/board` với tài khoản `Staff` hoặc `Manager`, kết quả đúng là 200, và với `Admin` là 403.
