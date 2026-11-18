@@ -11,7 +11,7 @@ Merge methods theo ruleset hiện tại đều cho phép merge/squash/rebase, tr
 | develop | Thêm `non_fast_forward`; chỉ cho squash merge | [develop ruleset](ops/develop-week1-ruleset.json) |
 | main | Giữ chặn non-fast-forward; chỉ cho merge commit | [main ruleset](ops/main-week1-ruleset.json) |
 
-Các JSON giữ nguyên conditions, required checks, approval và bypass actors đã đọc từ API; không thêm actor bypass. Người quản trị cần lấy cấu hình mới nhất và đối chiếu trước khi dùng, tránh ghi đè thay đổi của người khác sau thời điểm đề xuất.
+Các JSON giữ nguyên conditions, required checks và approval đã đọc từ API. Phản hồi cho Hai249 không có trường `bypass_actors`; không thể kết luận danh sách bypass rỗng. Vì vậy đề xuất **bỏ hẳn trường này**, không tạo danh sách rỗng thay cấu hình ẩn. Đây là tài liệu đối chiếu, không phải payload PUT hoàn chỉnh để áp dụng trực tiếp. Chủ repo cần lấy cấu hình mới nhất bằng tài khoản admin, giữ nguyên bypass actors và các cài đặt khác, rồi chỉ sửa những mục trong bảng; có thể thực hiện ngay trong giao diện Rulesets.
 
 Tài khoản kết nối Hai249 có push nhưng không có admin. Agent chưa PUT cấu hình và không thể tự cấp quyền quản trị. Không cần cấp quyền rộng chỉ để làm bước này: chủ repo có thể vào Settings → Rules → Rulesets, chọn đúng hai ruleset và sửa các mục trong bảng, giữ nguyên phần còn lại. Sau đó agent đọc API để kiểm chứng.
 

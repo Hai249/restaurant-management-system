@@ -2,9 +2,6 @@
     "name":  "develop",
     "target":  "branch",
     "enforcement":  "active",
-    "bypass_actors":  [
-
-                      ],
     "conditions":  {
                        "ref_name":  {
                                         "exclude":  [
