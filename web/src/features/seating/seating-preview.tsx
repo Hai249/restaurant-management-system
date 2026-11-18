@@ -23,6 +23,7 @@ export function SeatingPreview() {
                 </label>
             </div>
             <SeatingBoardView
+                key={role}
                 gateway={previewGateway}
                 canManageCatalog={role === "manager"}
                 canManageSessions
