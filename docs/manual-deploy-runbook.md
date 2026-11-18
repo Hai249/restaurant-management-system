@@ -58,3 +58,9 @@ curl --fail --silent --show-error https://staging.quanlynh.id.vn/health/ready
 ## Kiểm tra quyền tối thiểu
 
 [Script audit cố định](../scripts/restaurant-week1-audit.sh) chỉ đọc trạng thái SSH/UFW/fail2ban, cấu hình cập nhật, cơ chế renewal và thông tin Docker đã chọn; không in secret environment. Nếu cần cho agent tự thu bằng chứng, người quản trị phải kiểm tra script rồi cài bản sao do root sở hữu, chỉ cho sudo đúng đường dẫn này với không đối số. Không cấp NOPASSWD cho shell hoặc docker và không thêm deploy vào nhóm docker chỉ để đọc bằng chứng. Script này không cấp quyền deploy, SQL write hoặc gia hạn chứng chỉ.
+
+## Lưu ý cấu hình staging đã đối chiếu ngày 18/11/2026
+
+- APT periodic đã được bật lại và kiểm chứng 1/1, reboot=false theo [PR #54](https://github.com/Trunghieu220504/restaurant-management-system/pull/54). Việc này không thay cho kiểm tra log cập nhật hoặc xác nhận bản vá đã cài.
+- Trusted proxy đang thiếu trong runtime API; [PR #55](https://github.com/Trunghieu220504/restaurant-management-system/pull/55) thêm override đúng Nginx peer theo năm file Compose đang chạy. Nếu được áp dụng, giữ override này khi deploy API lần sau và xác minh lại IP khi Nginx bị recreate. Chưa áp dụng hoặc retest tại thời điểm ghi nhận.
+- Chứng chỉ Nginx mount ở `infra/certbot/conf` khác config-dir mặc định của timer Certbot; [PR #57](https://github.com/Trunghieu220504/restaurant-management-system/pull/57) cung cấp dry-run và bản sửa lịch/hook. Không coi `certbot.timer enabled` hoặc `renew` exit 0 là đủ, vì default renewal directory hiện không có lineage.

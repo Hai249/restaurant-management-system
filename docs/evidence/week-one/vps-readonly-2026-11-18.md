@@ -31,3 +31,25 @@ Theo dõi cấu hình auto-update tại [issue #53](https://github.com/Trunghieu
 - Timer certbot enabled nhưng audit không tìm thấy renewal `.conf` trong `/etc/letsencrypt/renewal`. Cần đối chiếu mount của Nginx và config-dir/cli.ini thực tế trước khi kết luận cơ chế renewal đang quản lý đúng chứng chỉ hoặc chạy dry-run.
 
 Quyền được cấp chỉ chạy audit cố định; không cho phép sửa APT/proxy, deploy hoặc ghi SQL. Các thay đổi hệ thống vẫn cần quản trị viên thực hiện đúng script/lệnh đã chuẩn bị.
+
+## Sau khi quản trị viên áp dụng cấu hình APT
+
+Quản trị viên chạy thành công script PR #54 lúc 13:04 UTC, backup root-only tại `/var/backups/restaurant-week1-security-updates/20261118T130404Z-193006`. Agent kiểm tra độc lập qua SSH và audit, gần nhất 13:36 UTC:
+
+- `APT::Periodic::Update-Package-Lists "1"`, `APT::Periodic::Unattended-Upgrade "1"`.
+- `Unattended-Upgrade::Automatic-Reboot "false"`; apt-daily.timer và apt-daily-upgrade.timer enabled/active.
+- Không ép upgrade hoặc reboot; không kết luận bản vá đã được cài. Kết quả này thay thế trạng thái APT 0/0 ở các lần kiểm tra trước, không xóa lịch sử lỗi.
+- INF03 đạt trong phạm vi cấu hình vận hành. [Issue #53](https://github.com/Trunghieu220504/restaurant-management-system/issues/53) vẫn theo dõi approval/merge [PR #54](https://github.com/Trunghieu220504/restaurant-management-system/pull/54).
+
+## Đối chiếu Compose và chứng chỉ đang phục vụ
+
+Quản trị viên cung cấp Docker labels/mounts; agent đọc file không bí mật để kiểm tra bổ sung:
+
+- Working directory thực tế là `/home/deploy/restaurant-management-system/infra`. API dùng backend, backend.https, frontend của working directory và hai GHCR overrides của release `hai-r8-release-7de77d4cbd15`; API không có mounts. Không dùng nhầm topology mới trong repo để đổi mạng đang chạy.
+- Nginx mount read-only `infra/certbot/conf` vào `/etc/letsencrypt`, `infra/certbot/www` vào `/var/www/certbot`, và `infra/nginx/backend.https.conf` vào config Nginx.
+- Certbot 2.9.0; native unit không có drop-in và không chỉ rõ config-dir. Thư mục `/etc/letsencrypt/renewal` có 0 file `.conf`; thư mục project `infra/certbot/conf/renewal` có đúng 1 file cho staging. Không có override config-dir trong CLI ini được kiểm tra.
+- Renewal config của project dùng webroot, map staging đến đúng `infra/certbot/www` trên host; không thấy saved hook hoặc directory hook. Vì vậy timer hiện tại không quản lý lineage Nginx đang phục vụ. Exit 0 của timer không phải bằng chứng renewal đạt; INF06 FAIL phần này, theo [issue #56](https://github.com/Trunghieu220504/restaurant-management-system/issues/56).
+- [PR #55](https://github.com/Trunghieu220504/restaurant-management-system/pull/55) sửa đúng trusted proxy; preview Compose chỉ thêm một biến môi trường, cú pháp đạt, CI đạt. Script đã tải nhưng chưa root apply/retest.
+- [PR #57](https://github.com/Trunghieu220504/restaurant-management-system/pull/57) chuẩn bị sửa lịch Certbot, có ACME staging dry-run trước khi đổi scheduler và hook Nginx test/reload. Bash syntax đạt cục bộ/VPS, SHA256 bản tải trùng nguồn. Quyền deploy không đọc được file certificate trong lineage; kiểm tra certificate và dry-run bằng root còn chờ, không cố đọc private key.
+
+Chưa thay runtime proxy hoặc scheduler Certbot trong các bước kiểm tra này; không ghi PASS trước apply và retest.
