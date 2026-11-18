@@ -11,11 +11,37 @@ không merge hoặc deploy trong task này.
 refresh đến muộn và kiểm chứng phép thử lệch OpenAPI. Các số 43/2 trong mục 6
 là kết quả lượt đầu, được giữ để truy vết; sáu ca staging vẫn BLOCKED.
 
-**Chưa chốt nghiệm thu tuần 1.** Backend refresh đã merge trong PR #26;
-frontend đã có login, refresh single-flight/cross-tab, logout và đổi mật khẩu.
-Bundle staging hiện được phục vụ vẫn còn biểu thức đọc biến refresh chưa được
-nhúng giá trị khi build. Cần Hải rebuild/deploy, Hiếu xác nhận API/migration
-và nhóm cung cấp tài khoản test trước khi chạy sáu ca E2E thật.
+## Cập nhật BAO-2.0 ngày 18/11/2026
+
+**BAO-2.0 — Xong.** Đã nghiệm thu cả ba tiêu chí trên staging với API thật.
+
+**Đầu ra đã có.** [PR #41](https://github.com/Trunghieu220504/restaurant-management-system/pull/41)
+đã merge vào `develop` tại `79a8984`. [Biên bản triển khai của Hải](reviews/week1-acceptance.md#7-bằng-chứng-staging--hải-18112026)
+ghi nhận web image tại commit `7de77d4`, đã bao gồm PR #41. Workflow publish
+build web với `NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED=true`. Lúc 13:35:55 giờ
+Việt Nam, Edge mở `/login` staging nhận 200 và bundle tự gửi
+`POST /api/identity/refresh`. API staging trả 401 đúng kỳ vọng với trình duyệt
+chưa có cookie. Hành vi này xác nhận refresh đã bật trên bản web đang phục vụ.
+
+| Tiêu chí “Xong khi” | Trạng thái | Bằng chứng |
+|---|---|---|
+| Đăng nhập thật qua giao diện staging | PASS | Lúc 15:49:18 giờ Việt Nam, `POST /api/identity/login` trả 200 và UI chuyển đến `/sales-day`. |
+| Qua 15 phút, còn refresh hợp lệ thì giữ phiên | PASS | Sau 15 phút 37 giây, 7 request với access token hết hạn nhận 401. Refresh trả 200, cả 7 lần gửi lại trả 200. UI vẫn ở `/sales-day`, không chuyển về `/login`. |
+| Nhiều request đồng thời chỉ gọi refresh một lần | PASS | Đợt 7 request `GET /api/identity/me` đồng thời phát sinh đúng 1 `POST /api/identity/refresh`, trả 200. |
+
+Lượt đạt chạy bằng Playwright/Edge trong một tab. Access token hết hạn lúc
+16:04:18, đợt request được gửi lúc 16:04:55 và hoàn tất lúc 16:04:57, giờ Việt
+Nam. Công cụ giữ các request `/me` ngay trước thời điểm hết hạn, tạo thêm request
+qua sự kiện `focus` rồi gửi cả đợt đến API staging. Phản hồi lấy trực tiếp từ
+staging. Cuối lượt, `POST /api/identity/logout` trả 204.
+
+Ba ca trong `web/e2e-production/refresh.spec.ts` đều đạt khi chạy bằng
+Playwright/Edge với bundle staging và API mock. Bộ unit test `auth-client.test.ts`
+đạt 17/17.
+
+Các mục dưới đây lưu kết quả ban đầu ngày 17/11, trước khi image có PR #41
+được triển khai. Mục 4 lưu bảng E2E tuần 1 theo phạm vi và trạng thái của lần
+ghi nhận ngày 17/11.
 
 ## 1. Đối chiếu tài liệu và phạm vi
 

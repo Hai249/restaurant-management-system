@@ -8,25 +8,18 @@ import {
     ClipboardList,
     Users,
     Boxes,
-    Store,
     UserCircle,
-    Settings,
     BarChart2,
-    Tag,
-    UserCheck,
     ReceiptText,
-    Smartphone,
     LayoutGrid,
     ChefHat,
     CalendarDays,
 } from "lucide-react";
-import { RestaurantForm } from "@/components/restaurant-form";
+import { usePermissions } from "@/components/permission-provider";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import {
-    useRestaurant,
-    type RestaurantOrder,
-} from "@/lib/store/restaurant-context";
+import { canAccess } from "@/lib/auth/route-permissions";
+import { useRestaurant } from "@/lib/store/restaurant-context";
 
 type OrderRow = {
     code: string;
@@ -46,81 +39,47 @@ const columns: ColumnDef<OrderRow>[] = [
 
 const moduleShortcuts = [
     {
-        title: "1. QL Món ăn",
+        title: "Thực đơn",
         href: "/menu",
-        desc: "Lưới món ăn, cờ 'Đã hết', toggle bật/tắt bán, tabs khai vị / món chính",
+        desc: "Quản lý món ăn và trạng thái còn bán",
         icon: Boxes,
-        badge: "Ảnh 1",
         color: "bg-orange-50 text-orange-600 border-orange-200",
     },
     {
-        title: "2. Danh sách cửa hàng",
-        href: "/stores",
-        desc: "Doanh thu chuỗi 188.320đ, chi nhánh Seoul / Sumibozu / Cơm Thố",
-        icon: Store,
-        badge: "Ảnh 2",
-        color: "bg-red-50 text-red-600 border-red-200",
-    },
-    {
-        title: "3. Hồ sơ tài khoản",
+        title: "Hồ sơ tài khoản",
         href: "/profile",
-        desc: "Tài khoản, số điện thoại, mật khẩu, đổi ngôn ngữ, đăng xuất",
+        desc: "Xem thông tin tài khoản và đổi mật khẩu",
         icon: UserCircle,
-        badge: "Ảnh 3",
         color: "bg-gray-50 text-gray-700 border-gray-200",
     },
     {
-        title: "4. Cài đặt quán",
-        href: "/settings",
-        desc: "Loại hình quán, tự động hoàn thành, thanh toán trước, nhắc nhở 15s",
-        icon: Settings,
-        badge: "Ảnh 4",
-        color: "bg-blue-50 text-blue-600 border-blue-200",
-    },
-    {
-        title: "5. Báo cáo KD",
+        title: "Báo cáo kinh doanh",
         href: "/reports",
-        desc: "Biểu đồ cột đỏ 188.320đ ngày 19/02, tổng thu, bảng chi tiết ngày",
+        desc: "Xem doanh thu và tổng tiền thu trong ngày",
         icon: BarChart2,
-        badge: "Ảnh 5",
         color: "bg-rose-50 text-rose-600 border-rose-200",
     },
     {
-        title: "6. QL Khuyến mại",
-        href: "/promotions",
-        desc: "Tìm kiếm CTKM, lọc theo loại & trạng thái, card giảm giá sản phẩm",
-        icon: Tag,
-        badge: "Ảnh 6",
-        color: "bg-indigo-50 text-indigo-600 border-indigo-200",
-    },
-    {
-        title: "7. QL Nhân viên",
+        title: "Tài khoản nhân viên",
         href: "/staff",
-        desc: "2 tab QL Nhân viên / QL Bộ phận, tìm kiếm, avatar, vai trò chủ quán",
+        desc: "Quản lý tài khoản và vai trò của nhân viên",
         icon: Users,
-        badge: "Ảnh 7",
         color: "bg-amber-50 text-amber-600 border-amber-200",
-    },
-    {
-        title: "8. QL Khách hàng",
-        href: "/customers",
-        desc: "2 tab Khách hàng / Xếp hạng, thống kê ăn & chi tiêu, nút + Tạo đơn",
-        icon: UserCheck,
-        badge: "Ảnh 8",
-        color: "bg-emerald-50 text-emerald-600 border-emerald-200",
     },
 ];
 
 export default function DashboardPage() {
-    const { orders, tables, salesDay } = useRestaurant();
+    const { orders, tables } = useRestaurant();
+    const { can } = usePermissions();
+    const visibleShortcuts = moduleShortcuts.filter(({ href }) =>
+        canAccess(href, can),
+    );
 
     // Dynamic calculations
     const closedOrders = orders.filter((o) => o.status === "DA_DONG");
     const todayRevenue = closedOrders.reduce((sum, o) => {
         return sum + o.payments.reduce((s, p) => s + p.amount, 0);
     }, 0);
-    const totalRevenueDisplay =
-        (188320 + todayRevenue).toLocaleString("vi-VN") + " ₫";
 
     const occupiedTables = tables.filter(
         (t) => t.status === "DANG_DUNG",
@@ -148,10 +107,10 @@ export default function DashboardPage() {
 
     const dynamicStats = [
         {
-            label: "Doanh thu toàn chuỗi",
-            value: totalRevenueDisplay,
+            label: "Tiền thu trong ngày",
+            value: `${todayRevenue.toLocaleString("vi-VN")} ₫`,
             icon: CircleDollarSign,
-            change: "Bao gồm 188.320đ baseline + đơn hôm nay",
+            change: "Từ các đơn đã hoàn tất",
         },
         {
             label: "Đơn hàng hôm nay",
@@ -280,26 +239,13 @@ export default function DashboardPage() {
                 ))}
             </section>
 
-            {/* 8 Module Shortcut Cards matching the 8 user images */}
             <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-lg font-bold text-gray-900">
-                            Các phân hệ đã xây dựng theo hình ảnh
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                            Bấm vào từng màn hình để xem và tương tác trực tiếp
-                            với giao diện mẫu.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
-                        <Smartphone size={14} />
-                        <span>Tối ưu hiển thị responsive</span>
-                    </div>
-                </div>
+                <h2 className="text-lg font-bold text-gray-900">
+                    Truy cập nhanh
+                </h2>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {moduleShortcuts.map((item) => {
+                    {visibleShortcuts.map((item) => {
                         const Icon = item.icon;
                         return (
                             <Link
@@ -308,14 +254,14 @@ export default function DashboardPage() {
                                 className="group rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-all hover:border-red-300 flex flex-col justify-between"
                             >
                                 <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span
-                                            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${item.color}`}
-                                        >
-                                            {item.badge}
-                                        </span>
-                                        <Icon className="size-5 text-gray-400 group-hover:text-red-500 transition-colors" />
-                                    </div>
+                                    <span
+                                        className={`inline-flex mb-2 rounded-lg border p-2 ${item.color}`}
+                                    >
+                                        <Icon
+                                            className="size-5"
+                                            aria-hidden="true"
+                                        />
+                                    </span>
                                     <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors text-sm">
                                         {item.title}
                                     </h3>
@@ -360,19 +306,6 @@ export default function DashboardPage() {
                     data={orderRows}
                     searchPlaceholder="Tìm mã đơn, tên bàn..."
                 />
-            </section>
-
-            {/* Validation Form example */}
-            <section className="max-w-2xl space-y-4 rounded-xl border bg-card p-5 sm:p-6 shadow-sm">
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900">
-                        Cấu hình thông tin nhà hàng
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                        Biểu mẫu xác thực React Hook Form + Zod.
-                    </p>
-                </div>
-                <RestaurantForm />
             </section>
         </div>
     );

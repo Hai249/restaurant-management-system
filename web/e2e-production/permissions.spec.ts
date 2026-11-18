@@ -64,3 +64,57 @@ test("granted menu/report permissions allow routes; revocation hides menu and bl
     ).toBeVisible();
     await expect(page.locator('a[href="/menu"]')).toHaveCount(0);
 });
+
+test("MVP navigation omits retired prototype pages and preserves mobile access", async ({
+    page,
+}) => {
+    const retiredRoutes = ["/customers", "/promotions", "/stores", "/settings"];
+    await mockIdentity(page, {
+        permissions: [
+            "catalog.menu.manage",
+            "fulfillment.kitchen.process",
+            "reporting.read",
+            "identity.accounts.manage",
+            "seating.sessions.manage",
+        ],
+    });
+
+    await page.goto("/");
+    await expect(
+        page.getByRole("heading", { name: "Truy cập nhanh" }),
+    ).toBeVisible();
+    for (const path of retiredRoutes) {
+        await expect(page.locator(`a[href="${path}"]`)).toHaveCount(0);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page
+        .getByRole("navigation", {
+            name: "Thanh điều hướng đáy màn hình di động",
+        })
+        .getByRole("link", { name: "Thêm" })
+        .click();
+    await expect(page).toHaveURL(/\/more$/);
+    const more = page.getByRole("main");
+    for (const path of [
+        "/sales-day",
+        "/kitchen",
+        "/reports",
+        "/staff",
+        "/profile",
+    ]) {
+        await expect(more.locator(`a[href="${path}"]`)).toBeVisible();
+    }
+    await expect(more.locator('a[href^="/guest?"]')).toBeVisible();
+    for (const path of retiredRoutes) {
+        await expect(page.locator(`a[href="${path}"]`)).toHaveCount(0);
+    }
+
+    for (const path of retiredRoutes) {
+        const response = await page.goto(path);
+        expect(response?.status(), path).toBe(404);
+        await expect(
+            page.getByText("Không tìm thấy trang", { exact: true }),
+        ).toBeVisible();
+    }
+});
