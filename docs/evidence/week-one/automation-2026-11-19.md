@@ -17,7 +17,7 @@ Phạm vi bàn giao tuần 1, kèm kiểm tra tương thích với develop mới
 | Spike SQL 2022 Docker cô lập | **20/20 lượt, mỗi lượt 9/9 PASS, 0 skip; tổng 180** | [Run 44378527302](https://github.com/Hai249/restaurant-management-system/actions/runs/44378527302), artifact `14461883728`. Agent tải zip và độc lập đọc đúng 20 TRX, kiểm tra cả tên lớp và counters. SQL 16.0.4325.4; không chỉ dựa dấu xanh job |
 | Chính script spike được bàn giao | **20 × 9 = 180/180 PASS, 0 skip** | [CI PR #68, run 44386503780](https://github.com/Trunghieu220504/restaurant-management-system/actions/runs/44386503780), artifact `14465463039`. Đã tải/đọc 20 TRX, kiểm tra tên lớp và đối chiếu summary; commit `965600d` |
 | Guard kết nối của script | **8/8 PASS** | Cho loopback, chặn remote/app database/alias xung đột/attach file/failover/user instance; không mở kết nối trong test guard |
-| Source checks | **PASS** | Bash parse, PowerShell parse, Node parse, diagnostics file mới. Lint toàn frontend: 0 error, 41 warning có sẵn; không ghi “0 warning” |
+| Source checks | **PASS** | Bash/PowerShell/Node parse, diagnostics file mới và Prettier toàn frontend. Lint mới nhất trên `3f70da2`: 0 error, 25 warning; hai script browser mới lint 0 warning. Đợt trên `df6160c` có 41 warning; không ghi “0 warning” cho toàn frontend |
 
 Đợt 14:36–14:53 UTC trước đó cũng đạt 121 backend + 48 frontend + 7 browser, nhưng SQL mặc định khi ấy là 11.0.6020.0. Đợt này được giữ làm lịch sử, **không** dùng làm bằng chứng SQL 2022. Sau phát hiện, script chọn instance SQL 2022 đang chạy mà không đổi cấu hình dịch vụ. Các lượt lặp trên instance Windows RTM từng timeout ở CREATE DATABASE trong fixture; không bỏ assertion hoặc gọi đây là lỗi nghiệp vụ đã tái hiện. Kết luận lặp 20 lần ở bảng lấy từ Docker SQL 2022 cô lập trên CI.
 
@@ -33,7 +33,7 @@ Lần kiểm tra mở rộng `automation-20261118T200340Z` trên develop `866e53
 | SSH Match theo kết nối thật | **PARTIAL** — cấu hình tổng quát đạt | Plan script chuẩn bị E2E kiểm tra deploy/root với đúng SSH_CONNECTION; cần output thực tế trước khi đổi PASS |
 | Bảo vệ develop / merge methods | **Đề xuất sẵn, chưa áp dụng** | Chủ repo áp dụng [hai điều chỉnh cụ thể](../../github-week-one-controls.md). Tài khoản Hai249 không có admin |
 | Review/merge | **PR #52 đã APPROVED và merged**; #49/#54/#55/#57 còn mở tại lần đối chiếu | CI hai checks mới đã success sau đồng bộ; cần reviewer độc lập và merge. Bộ automation/báo cáo này cũng cần PR review |
-| Sửa lỗi Catalog phát hiện khi kiểm tra tương thích | **PR #69 đã sửa và tất cả checks PASS**, chưa merge/deploy | Chủ module review/merge riêng; không coi lỗi trên develop chưa sửa nếu bản fix vẫn nằm trong PR. PR #68 cung cấp harness, không chứa thay đổi nghiệp vụ này |
+| Sửa lỗi Catalog phát hiện khi kiểm tra tương thích | **PR #69 đã sửa và tất cả checks PASS**, chưa merge/deploy | Chủ module review/merge riêng; lỗi chỉ được sửa trên develop sau khi PR được merge. PR #68 cung cấp harness, không chứa thay đổi nghiệp vụ này |
 | Kết luận spike và chiến lược nhóm | **Đã có bằng chứng kỹ thuật và review/merge tài liệu #52** | Không tự ký thay Phương hoặc tạo approval thay người khác; xem [review C03 hỗ trợ Hải](../../reviews/c03-hai-2026-11-19.md) |
 | Nguồn 4G / IPv6 nếu áp dụng tiêu chí INF02 đầy đủ | **Chưa có bằng chứng** | Kết quả hiện tại là external TCP IPv4, không sửa nhãn nguồn thành 4G |
 
