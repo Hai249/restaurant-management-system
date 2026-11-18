@@ -108,8 +108,6 @@ interface RestaurantContextValue {
     salesDay: SalesDayState;
 
     // Actions
-    openTableSession: (tableId: string, guestCount?: number) => void;
-    transferTable: (fromTableId: string, toTableId: string) => boolean;
     createOrder: (
         tableId: string,
         items: { dishId: number; quantity: number; note?: string }[],
@@ -128,9 +126,6 @@ interface RestaurantContextValue {
     ) => void;
     waiveOrder: (orderId: string, amount: number, reason: string) => void;
     closeOrder: (orderId: string) => boolean;
-    toggleDishStock: (dishId: number) => void;
-    openSalesDay: (openingCash: number) => void;
-    closeSalesDay: (actualCash: number, note?: string) => boolean;
 }
 
 const RestaurantContext = createContext<RestaurantContextValue | null>(null);
@@ -363,7 +358,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         return initialOrders;
     });
 
-    const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
+    const [menuItems] = useState<MenuItem[]>(() => {
         if (typeof window !== "undefined") {
             const saved = localStorage.getItem("restaurant_menu");
             if (saved)
@@ -374,7 +369,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         return initialMenuItems;
     });
 
-    const [salesDay, setSalesDay] = useState<SalesDayState>(() => {
+    const [salesDay] = useState<SalesDayState>(() => {
         if (typeof window !== "undefined") {
             const saved = localStorage.getItem("restaurant_salesday");
             if (saved)
@@ -398,102 +393,6 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         localStorage.setItem("restaurant_orders", JSON.stringify(orders));
     }, [orders]);
-
-    useEffect(() => {
-        localStorage.setItem("restaurant_menu", JSON.stringify(menuItems));
-    }, [menuItems]);
-
-    useEffect(() => {
-        localStorage.setItem("restaurant_salesday", JSON.stringify(salesDay));
-    }, [salesDay]);
-
-    // ── 1. MỞ PHIÊN BÀN (UC03) ──────────────────────────────────────────
-    const openTableSession = useCallback(
-        (tableId: string, guestCount: number = 2) => {
-            if (salesDay.status !== "DANG_BAN") {
-                toast.error(
-                    "Ngày bán chưa mở hoặc đã chốt. Hãy mở ngày bán trước!",
-                );
-                return;
-            }
-            setTables((prev) =>
-                prev.map((t) =>
-                    t.id === tableId
-                        ? {
-                              ...t,
-                              status: "DANG_DUNG",
-                              guestCount,
-                              openedAt: new Date().toLocaleTimeString("vi-VN", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                              }),
-                          }
-                        : t,
-                ),
-            );
-            toast.success(`Đã mở phiên cho ${tableId} (${guestCount} khách).`);
-        },
-        [salesDay.status],
-    );
-
-    // ── 2. CHUYỂN BÀN (UC03) ─────────────────────────────────────────────
-    const transferTable = useCallback(
-        (fromTableId: string, toTableId: string) => {
-            const toTable = tables.find((t) => t.id === toTableId);
-            if (!toTable || toTable.status !== "TRONG") {
-                toast.error("Bàn đích không trống, không thể chuyển!");
-                return false;
-            }
-
-            const fromTable = tables.find((t) => t.id === fromTableId);
-            if (!fromTable) return false;
-
-            // Update tables and order
-            setTables((prev) =>
-                prev.map((t) => {
-                    if (t.id === fromTableId) {
-                        return {
-                            ...t,
-                            status: "TRONG",
-                            currentOrderId: undefined,
-                            guestCount: undefined,
-                            openedAt: undefined,
-                        };
-                    }
-                    if (t.id === toTableId) {
-                        return {
-                            ...t,
-                            status: "DANG_DUNG",
-                            currentOrderId: fromTable.currentOrderId,
-                            guestCount: fromTable.guestCount,
-                            openedAt: fromTable.openedAt,
-                        };
-                    }
-                    return t;
-                }),
-            );
-
-            if (fromTable.currentOrderId) {
-                setOrders((prev) =>
-                    prev.map((o) =>
-                        o.id === fromTable.currentOrderId
-                            ? {
-                                  ...o,
-                                  tableId: toTableId,
-                                  tableName: toTable.name,
-                              }
-                            : o,
-                    ),
-                );
-            }
-
-            toast.success(
-                `Đã chuyển phiên từ ${fromTable.name} sang ${toTable.name}. Giữ nguyên đợt món.`,
-            );
-            return true;
-        },
-        [tables],
-    );
 
     // ── 3. TẠO ĐƠN & GỬI ĐỢT MÓN (UC06, UC07) ────────────────────────────
     const createOrder = useCallback(
@@ -778,69 +677,6 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         [orders],
     );
 
-    // ── 11. ĐÁNH DẤU HẾT MÓN / MỞ BÁN LẠI (UC05) ─────────────────────────
-    const toggleDishStock = useCallback((dishId: number) => {
-        setMenuItems((prev) =>
-            prev.map((d) =>
-                d.id === dishId ? { ...d, outOfStock: !d.outOfStock } : d,
-            ),
-        );
-    }, []);
-
-    // ── 12. MỞ NGÀY BÁN (UC25) ───────────────────────────────────────────
-    const openSalesDay = useCallback((openingCash: number) => {
-        setSalesDay({
-            status: "DANG_BAN",
-            businessDate: new Date().toISOString().split("T")[0],
-            openingCash,
-            openedAt: new Date().toLocaleTimeString("vi-VN", {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
-        });
-        // Reset cờ hết món theo UC25
-        setMenuItems((prev) => prev.map((d) => ({ ...d, outOfStock: false })));
-        toast.success(
-            `Đã mở ngày bán với tiền đầu ngày: ${openingCash.toLocaleString("vi-VN")} đ. Reset tất cả cờ hết món.`,
-        );
-    }, []);
-
-    // ── 13. CHỐT NGÀY BÁN (UC26) ─────────────────────────────────────────
-    const closeSalesDay = useCallback(
-        (actualCash: number, note?: string) => {
-            // Điều kiện UC26: Không còn order mở hoặc bàn đang sử dụng
-            const hasOpenOrders = orders.some(
-                (o) => o.status !== "DA_DONG" && o.status !== "DA_HUY",
-            );
-            const hasActiveTables = tables.some(
-                (t) => t.status === "DANG_DUNG",
-            );
-
-            if (hasOpenOrders || hasActiveTables) {
-                toast.error(
-                    "Điều kiện chặn: Vẫn còn đơn hàng mở hoặc bàn đang sử dụng! Hãy đóng tất cả trước khi chốt ngày.",
-                );
-                return false;
-            }
-
-            setSalesDay((prev) => ({
-                ...prev,
-                status: "DA_CHOT",
-                closingCash: actualCash,
-                closedAt: new Date().toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }),
-            }));
-
-            toast.success(
-                `Chốt ngày bán thành công! Tiền két thực tế: ${actualCash.toLocaleString("vi-VN")} đ.`,
-            );
-            return true;
-        },
-        [orders, tables],
-    );
-
     return (
         <RestaurantContext.Provider
             value={{
@@ -848,8 +684,6 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
                 orders,
                 menuItems,
                 salesDay,
-                openTableSession,
-                transferTable,
                 createOrder,
                 confirmOrder,
                 startCookingItem,
@@ -858,9 +692,6 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
                 addPayment,
                 waiveOrder,
                 closeOrder,
-                toggleDishStock,
-                openSalesDay,
-                closeSalesDay,
             }}
         >
             {children}
