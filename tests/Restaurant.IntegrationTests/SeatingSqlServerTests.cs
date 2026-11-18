@@ -36,12 +36,12 @@ public sealed class SeatingSqlServerTests : IAsyncLifetime
     }
 
     [Fact]
-    public void Model_and_migration_define_all_five_tables()
+    public void Model_and_migrations_define_all_tables()
     {
         using var db = new SeatingDbContext(new DbContextOptionsBuilder<SeatingDbContext>()
             .UseSqlServer(ApiFactory.ConnectionString).Options);
-        Assert.Equal(5, db.Model.GetEntityTypes().Count());
-        Assert.Single(db.Database.GetMigrations());
+        Assert.Equal(6, db.Model.GetEntityTypes().Count());
+        Assert.Equal(2, db.Database.GetMigrations().Count());
         Assert.All(db.Model.GetEntityTypes().SelectMany(entity => entity.GetForeignKeys()),
             fk => Assert.Equal("seating", fk.PrincipalEntityType.GetSchema()));
         Assert.Contains("WHERE [DongLuc] IS NULL", db.Database.GenerateCreateScript());
