@@ -1,0 +1,25 @@
+# Rate limit đồng thời hai nguồn — FAIL, 18/11/2026
+
+Môi trường: `https://staging.quanlynh.id.vn`, image/SHA đang chạy cần đối chiếu lại qua audit VPS. Dùng hai nguồn: workstation ngoài VPS và curl chạy trên VPS qua SSH. Đối chiếu public outbound IPv4 qua dịch vụ kiểm tra IP trả kết quả hai nguồn khác nhau; địa chỉ cụ thể không được lưu vào repo.
+
+Request: `POST /api/identity/login`, `Content-Type: application/json`, body `{}`; mỗi nguồn gửi 11 request tuần tự, bắt đầu cùng epoch UTC. Không dùng tên người dùng, mật khẩu hoặc cookie; không đổi dữ liệu nghiệp vụ.
+
+## Kỳ vọng
+
+Mỗi IP có 10 request lỗi nhận 400, request 11 nhận 429, độc lập trong cùng cửa sổ 60 giây.
+
+## Kết quả
+
+| Lượt | Workstation | VPS | Thời gian UTC | Nhận xét |
+|---|---|---|---|---|
+| 1 | 0 × 400, 11 × 429 | 10 × 400, 1 × 429 | 10:14:37–10:14:41 | Nguồn workstation đã bị giới hạn ở đầu lượt; chưa đủ điều kiện kết luận |
+| 2 | 2 × 400, 9 × 429 | 8 × 400, 3 × 429 | 10:17:32–10:17:35 | Hai nguồn cộng lại chỉ có 10 request trước 429 |
+| 3 | 1 × 400, 10 × 429 | 9 × 400, 2 × 429 | 10:24:52–10:24:55 | Đã dừng scanner, không gửi login từ công cụ thử trong ít nhất 75 giây trước lúc bắt đầu; ép IPv4 cả hai nguồn; vẫn tổng 10 request |
+
+Kết luận: **FAIL đối với kỳ vọng hạn mức độc lập cho hai nguồn trong phép thử này**. Kết quả gợi ý các request đang cùng partition; chưa xác nhận root cause hoặc cấu hình forwarded headers đang chạy. Public egress khác nhau không tự chứng minh giá trị RemoteIpAddress mà API thực sự nhận; cần audit KnownProxies, địa chỉ Nginx và forwarded headers để kết luận.
+
+Lượt xác minh xen giữa gặp SSH timeout trong khi quét cổng nên không có kết quả hợp lệ, không được tính PASS hoặc dùng để kết luận nghiệp vụ. Sau khi dừng scanner, HTTPS root trả 200 và SSH kết nối lại thành công. Quét TCP toàn dải đã dừng trước khi hoàn tất, không có kết luận toàn dải.
+
+Mức đề xuất S2; cần Hiếu/Hải đối chiếu cấu hình proxy rồi sửa theo PR/kế hoạch triển khai phù hợp. Không thay module Identity hoặc deploy lại chỉ để che kết quả. Sau sửa phải chạy lại cùng phép thử và kiểm tra giả mạo X-Forwarded-For không vượt giới hạn.
+
+Theo dõi sửa và kiểm lại tại [issue #51](https://github.com/Trunghieu220504/restaurant-management-system/issues/51).

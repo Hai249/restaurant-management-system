@@ -1,6 +1,6 @@
 # Chiến lược kiểm thử Tuần 1 — HAI-1.6
 
-**Trạng thái: Bản nháp cần nhóm xác nhận, cập nhật 12/11/2026.** Tài liệu thực hiện HAI-1.6 theo kế hoạch 7 tuần. Ma trận 17 test chính thức lấy từ `docs/phan-cong-chi-tiet-7-tuan.md`, mục 8. Các ca kiểm tra hạ tầng bổ sung được giữ tại phụ lục.
+**Trạng thái: Bản nháp cần nhóm xác nhận, cập nhật 18/11/2026.** Tài liệu thực hiện HAI-1.6 theo kế hoạch 7 tuần. Ma trận 17 test chính thức lấy từ `docs/phan-cong-chi-tiet-7-tuan.md`, mục 8. Các ca kiểm tra hạ tầng bổ sung được giữ tại phụ lục.
 
 ## 1. Tháp kiểm thử và điều kiện nghiệm thu
 
@@ -9,7 +9,7 @@
 - **E2E (ít, tập trung):** đăng nhập/refresh từ web, mở ngày bán, logout và đổi mật khẩu. Khi chưa có backend dùng mock; kết quả mock không thay cho staging.
 - **Infrastructure/UAT:** SSH, firewall, DNS, HTTPS, health, CI, GHCR và demo từ mạng 4G.
 
-Yêu cầu PR: CI xanh, không có secret, test tương ứng và review. **SKIP không được coi là PASS.** Mỗi ca ghi trạng thái `PASS/FAIL/SKIP/BLOCKED/NOT_RUN` cùng commit, môi trường và bằng chứng.
+Yêu cầu PR: CI xanh, không có secret, test tương ứng và review. **SKIP không được coi là PASS.** Mỗi ca ghi trạng thái `PASS/FAIL/SKIP/BLOCKED/NOT_RUN/PARTIAL` cùng commit, môi trường và bằng chứng. `SKIP` dành cho kết quả test runner có lý do; `PARTIAL` là tiêu chí mới có bằng chứng một phần.
 
 ## 2. Quy tắc đặt tên, dữ liệu và môi trường
 
@@ -72,26 +72,26 @@ Chủ là người viết test; Hải phụ trách chạy CI, tổng hợp trạ
 
 ## 7. Phụ lục — Các kiểm tra hạ tầng và tích hợp đề xuất
 
-Trạng thái được cập nhật theo bằng chứng hiện có đến ngày 12/11/2026. Các tiêu chí chưa kiểm tra đầy đủ không được coi là PASS.
+Đối chiếu ngày 18/11/2026 với bằng chứng [staging](reviews/week1-acceptance.md), [C03](spike-c03-result.md) trên develop `68cd462` và [CI PR #46](https://github.com/Trunghieu220504/restaurant-management-system/actions/runs/44240180220). Đã đọc TRX SQL: 9/9 test Phương Passed, 0 skip. `PARTIAL` là mới đạt một phần tiêu chí; `BLOCKED` là cần điều kiện bên ngoài; `NOT_RUN` là chưa có bằng chứng đủ để kết luận. Bằng chứng cũ là báo cáo lịch sử, không khẳng định trạng thái hiện tại của VPS.
 
 | ID | Ca và kỳ vọng | Chủ trì | Mức | Tình trạng ban đầu |
 |---|---|---|---|---|
-| INF01 | SSH khóa với user `deploy`; root/password login theo cấu hình đã duyệt | Hải | S1 | Chưa nghiệm thu |
-| INF02 | Quét từ 4G chỉ thấy 22/80/443, không thấy 1433/8080 | Hải | S1 | Chưa nghiệm thu |
-| INF03 | UFW/fail2ban/auto security updates hoạt động | Hải | S2 | Chưa nghiệm thu |
-| INF04 | SQL Docker nhận `SELECT 1`; volume tồn tại sau recreate không xóa dữ liệu | Hải | S2 | SELECT 1 đã PASS; volume chưa thử |
-| INF05 | `staging.quanlynh.id.vn` phân giải đúng IP VPS | Hải + người giữ DNS | S2 | Domain truy cập được qua HTTPS; chưa đối chiếu trực tiếp bản ghi A với IP VPS |
-| INF06 | HTTPS hợp lệ, HTTP→HTTPS, gia hạn được thử | Hải | S2 | HTTPS trả 200; chưa nghiệm thu HTTP→HTTPS và gia hạn chứng chỉ |
-| INF07 | `GET /health/live` 200 qua staging Nginx | Hải | S2 | PASS — HTTPS 200 trên VPS ngày 12/11/2026 |
-| INF08 | `GET /health/ready` 200 sau migration và kết nối DB | Hải | S2 | HTTPS 200 ngày 12/11/2026; chưa xác minh riêng migration |
-| INF09 | Identity migration idempotent và bootstrap Admin 1 lần | Hiếu + Hải | S1 | NOT_RUN trên staging |
-| INF10 | Login thật, khóa sau sai mật khẩu, rate limit đúng | Hiếu | S2 | NOT_RUN trên staging |
-| INF11 | `/me`, logout, đổi mật khẩu, session cũ bị từ chối | Hiếu | S2 | NOT_RUN trên staging |
-| INF12 | Refresh cookie xoay vòng, thu hồi token cũ | Hiếu + Bảo Anh | S2 | Feature đã merge PR #26; còn chờ nghiệm thu staging, xem `week-one-acceptance.md` |
+| INF01 | SSH khóa với user `deploy`; root/password login theo cấu hình đã duyệt | Hải | S1 | PARTIAL — SSH khóa deploy thành công, cấu hình tổng quát tắt root/password; chưa kiểm tra riêng các điều kiện Match theo kết nối. [Bằng chứng](evidence/week-one/vps-readonly-2026-11-18.md) |
+| INF02 | Quét từ 4G chỉ thấy 22/80/443, không thấy 1433/8080 | Hải | S1 | PARTIAL — thử năm cổng từ máy ngoài VPS: 22/80/443 kết nối được, 1433/8080 không; chưa quét toàn bộ từ 4G hoặc IPv6 |
+| INF03 | UFW/fail2ban/auto security updates hoạt động | Hải | S2 | PARTIAL — UFW active, fail2ban có jail sshd, unattended-upgrades enabled/active; chưa xác minh chính sách và lịch sử cập nhật |
+| INF04 | SQL Docker nhận `SELECT 1`; volume tồn tại sau recreate không xóa dữ liệu | Hải | S2 | PARTIAL — SELECT 1 được báo cáo đạt; không thử recreate SQL trên staging |
+| INF05 | `staging.quanlynh.id.vn` phân giải đúng IP VPS | Hải + người giữ DNS | S2 | PASS — A record trùng địa chỉ đã dùng SSH vào VPS, kiểm tra 18/11 |
+| INF06 | HTTPS hợp lệ, HTTP→HTTPS, gia hạn được thử | Hải | S2 | PARTIAL — HTTPS 200, báo cáo HTTP 301/HSTS, certbot.timer enabled; chưa thử gia hạn |
+| INF07 | `GET /health/live` 200 qua staging Nginx | Hải | S2 | PASS — báo cáo staging 18/11, commit deploy 7de77d4 |
+| INF08 | `GET /health/ready` 200 sau migration và kết nối DB | Hải | S2 | PASS — báo cáo 18/11: Seating migration đã áp dụng, ready 200; không chứng minh mọi migration khác |
+| INF09 | Identity migration idempotent và bootstrap Admin 1 lần | Hiếu + Hải | S1 | PARTIAL — báo cáo có một Admin hoạt động; chưa xác nhận đầy đủ migration Identity và bootstrap một lần |
+| INF10 | Login thật, khóa sau sai mật khẩu, rate limit đúng | Hiếu | S2 | FAIL với kiểm tra đồng thời 18/11: hai nguồn outbound IPv4 khác nhau chỉ nhận tổng 10 × 400 rồi 429; chưa xác nhận nguyên nhân proxy. Login/từng IP có bằng chứng cũ; khóa tài khoản chưa nghiệm thu. [Chi tiết](evidence/week-one/rate-limit-concurrent-2026-11-18.md) |
+| INF11 | `/me`, logout, đổi mật khẩu, session cũ bị từ chối | Hiếu | S2 | PARTIAL — báo cáo /me không bearer 401; các luồng có phiên chưa đủ bằng chứng staging |
+| INF12 | Refresh cookie xoay vòng, thu hồi token cũ | Hiếu + Bảo Anh | S2 | PARTIAL — backend staging 200→200, replay cũ 401 và token mới nhất sau thu hồi 401; tài khoản test chờ nhóm xác nhận, không thay E2E |
 | INF13 | Frontend mock login/refresh, nhiều 401 chỉ refresh một lần | Bảo Anh | S2 | PASS cục bộ 17/11: 48 unit test và 17 browser production test, gồm 5 request 401/1 refresh; xem `baoanh-auth-verification.md`. Không thay cho staging |
-| INF14 | E2E web đăng nhập thật, refresh sau 15 phút | Bảo Anh + Hiếu + Hải | S2 | BLOCKED ngày 17/11: bundle staging chưa nhúng cờ refresh; có ảnh/log trong `week-one-acceptance.md`; chờ deploy và tài khoản test |
-| INF15 | SalesDay mở lần đầu, chặn lần hai; đồng thời/idempotency | Phương + Duy | S2 | Chờ bằng chứng staging |
-| INF16 | C03 Shared/Exclusive SQL locks; rollback 2 DbContext nguyên vẹn | Phương | S1 | Có test cục bộ, chưa chứng thực CI |
-| INF17 | CI test/backend/frontend, PR đỏ bị chặn, GHCR phát hành image | Hải | S2 | Chưa nghiệm thu |
+| INF14 | E2E web đăng nhập thật, refresh sau 15 phút | Bảo Anh + Hiếu + Hải | S2 | BLOCKED — lịch sử 17/11 thiếu cờ build; báo cáo deploy 18/11 có image mới nhưng chưa nghiệm thu browser thật, tài khoản và dữ liệu test vẫn cần xác nhận; không yêu cầu deploy lại chỉ vì ghi chú cũ |
+| INF15 | SalesDay mở lần đầu, chặn lần hai; đồng thời/idempotency | Phương + Duy | S2 | BLOCKED — cần Manager test được phép và dữ liệu staging thống nhất |
+| INF16 | C03 Shared/Exclusive SQL locks; rollback 2 DbContext nguyên vẹn | Phương | S1 | PARTIAL — 20 lượt cục bộ 9/9; [TRX CI PR #46](https://github.com/Trunghieu220504/restaurant-management-system/actions/runs/44240180220/artifacts/14399620425) có 9/9 test Phương Passed, không skip; kết luận spike vẫn chờ ký review |
+| INF17 | CI test/backend/frontend, PR đỏ bị chặn, GHCR phát hành image | Hải | S2 | PASS trong phạm vi bằng chứng — backend #46/#49 success; Web CI #41 success; required check đỏ ở PR thử #50, API báo blocked; GHCR có image SHA đã báo cáo deploy. [Chi tiết và giới hạn](evidence/week-one/github-controls-2026-11-18.md). Không đồng nghĩa toàn bộ tuần 1 đã được duyệt |
 
 Không được đánh dấu `PASS` cho cả ca nếu mới thực hiện **một phần**. Bảng này là checklist bổ sung, không thay thế ma trận chính thức tại mục 4.
