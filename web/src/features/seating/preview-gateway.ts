@@ -64,7 +64,7 @@ function save<T extends PreviewArea>(
     records: T[],
     input: Pick<T, "code" | "name"> & Partial<T>,
     create: (id: string, version: string) => T,
-    existing?: { id: string; version: string },
+    existing?: { id: string; version?: string },
 ) {
     const code = input.code.trim();
     const name = input.name.trim();

@@ -41,12 +41,32 @@ table creation, editing and archiving, plus opening, transferring and closing a
 table session. The manager and staff options preview the catalog and session
 controls. Sample changes persist across reloads within that tab.
 
-The preview is available in development. Production `/tables` is pending the
-HIE-2.1 endpoints and OpenAPI contract. The API adapter will implement
-`SeatingGateway`, use the existing authenticated fetch, and map the documented
-problem `code` values to Vietnamese UI messages. The browser tests in
-`e2e/baoanh-seating.spec.ts` cover the preview; staging acceptance requires the
-deployed API and test accounts with Seating permissions.
+Production `/tables` uses the HIE-2.1 endpoints through `features/seating/api.ts`.
+The local preview is available only in development. Its browser tests live in
+`e2e/baoanh-seating.spec.ts`.
+
+## Cách thay mock (BAO-2.3)
+
+1. Đối chiếu endpoint, quyền, DTO, mã lỗi và quy tắc ghi trong `docs/api/openapi.json` và hợp đồng của module trên `develop`. Kiểu TypeScript lấy từ `@/lib/api/generated`. Khi hợp đồng thay đổi, chạy `npm run gen:api`.
+2. Tạo `src/features/<module>/api.ts` theo mẫu Seating. Gửi đường dẫn cùng origin qua `authFetch`, chuyển `AbortSignal` vào GET, ánh xạ DTO và mã lỗi sang dữ liệu hiển thị. Với Seating, quyền quản lý phiên đọc `GET /api/seating/board`, quyền quản lý danh mục đọc `areas` và `tables` để lấy cả phiên bản bản ghi.
+3. Đặt hook trong `features/<module>/queries.ts`. Dùng `useQuery` cho GET và `useMutation` cho lệnh ghi. Khóa truy vấn chứa module, tài nguyên và các bộ lọc gửi lên server. Sau khi ghi thành công, gọi `invalidateQueries` để đọc lại dữ liệu. Xem `useSeatingBoard` và `useSeatingChange`.
+4. Nối trang vào hook. Trang `/tables` tạo adapter theo quyền và giới hạn bộ nhớ đệm trong phiên hiển thị của tài khoản hiện tại. Khi đổi tài khoản hoặc quyền, trang tạo lại QueryClient. Hiển thị trạng thái tải, rỗng, lỗi và nút thử lại. Giữ nguyên `version` khi sửa hoặc lưu trữ. Với lệnh phiên bàn, dùng cùng `Idempotency-Key` khi thử lại cùng thao tác.
+5. Bỏ `useRestaurant()` khỏi trang sau khi đã chuyển cả đọc và ghi. Chạy `npm run lint`, `npm test`, `npm run build`. Trên môi trường tích hợp, đăng nhập bằng tài khoản có quyền, thử một lệnh ghi và tải lại trang để đối chiếu với GET. Để mở phiên bàn, cần có ngày bán đang mở.
+
+### Lộ trình gỡ restaurant-context
+
+Thời hạn đề xuất cho từng trang tính theo ngày làm việc kể từ khi toàn bộ API phụ thuộc của dòng đó có trên môi trường tích hợp. Trong thời gian chuyển tiếp, phiên thật ở `/tables` và dữ liệu mẫu của `/orders`, `/guest` thuộc hai luồng riêng.
+
+| Trang                             | Dữ liệu cần chuyển                                                                | Hạn đề xuất |
+| --------------------------------- | --------------------------------------------------------------------------------- | ----------- |
+| `/orders`                         | Phiên bàn, tạo đơn, phục vụ, thu tiền và đóng đơn từ Seating, Sales và thanh toán | 3 ngày      |
+| `/kitchen`                        | Hàng đợi bếp và chuyển trạng thái món từ Fulfillment                              | 2 ngày      |
+| `/guest`                          | Truy cập phiên qua QR, thực đơn và gửi đơn từ Guest, Catalog và Sales             | 3 ngày      |
+| `/`                               | Số liệu bàn và đơn hàng từ Seating và Sales hoặc endpoint tổng hợp theo quyền     | 2 ngày      |
+| `/reports`                        | Doanh thu và ngày kinh doanh từ Reporting và SalesDay                             | 2 ngày      |
+| Khung dashboard (`app-shell.tsx`) | Nhãn ngày bán từ SalesDay                                                         | 1 ngày      |
+
+Sau khi chuyển dòng cuối cùng, tìm `useRestaurant` và `RestaurantProvider` trong `src`, bỏ provider ở layout gốc rồi xóa store trong cùng PR. Các trang ngoài MVP đã gỡ gồm `/customers`, `/promotions`, `/stores` và `/settings`. Trang `/more` giữ các lối vào MVP trên điện thoại theo quyền tài khoản.
 
 ## Identity Authentication & Client-side Route Guard
 

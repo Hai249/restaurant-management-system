@@ -129,6 +129,7 @@ export function SeatingEditor({
                                 <span>Mã</span>
                                 <Input
                                     name="code"
+                                    readOnly={!!action.existing}
                                     defaultValue={action.existing?.code}
                                     maxLength={32}
                                     pattern=".*\S.*"

@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useSeatingBoard, useSeatingChange } from "./queries";
 import { LayoutGrid, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SeatingEditor, type SeatingEditorAction } from "./seating-editor";
 import {
     describeSeatingFailure,
-    type SeatingBoard,
     type SeatingChange,
     type SeatingGateway,
     type SeatingTable,
@@ -56,7 +57,11 @@ function TableCard({
                             : "bg-emerald-100 text-emerald-900",
                     )}
                 >
-                    {session ? "Đang dùng" : "Trống"}
+                    {canManageSessions
+                        ? session
+                            ? "Đang dùng"
+                            : "Trống"
+                        : "Chưa có thông tin phiên"}
                 </span>
             </div>
             {session && (
@@ -168,73 +173,63 @@ function TableCard({
     );
 }
 
-export function SeatingBoardView({
-    gateway,
-    canManageCatalog,
-    canManageSessions,
-}: {
+type BoardProps = {
     gateway: SeatingGateway;
     canManageCatalog: boolean;
     canManageSessions: boolean;
-}) {
-    const [board, setBoard] = useState<SeatingBoard | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState<string | null>(null);
+};
+// A new cache is mounted for each signed-in account and permission scope.
+export function SeatingBoardView(props: BoardProps) {
+    const [client] = useState(() => new QueryClient());
+    return (
+        <QueryClientProvider client={client}>
+            <BoardContent {...props} />
+        </QueryClientProvider>
+    );
+}
+function BoardContent({
+    gateway,
+    canManageCatalog,
+    canManageSessions,
+}: BoardProps) {
+    const query = useSeatingBoard(gateway);
+    const mutation = useSeatingChange(gateway);
+    const board = query.data,
+        loading = query.isFetching,
+        saving = mutation.isPending;
+    const loadError = query.error ? describeSeatingFailure(query.error) : null;
+    const reload = () => void query.refetch();
     const [editorError, setEditorError] = useState<string | null>(null);
-    const [saving, setSaving] = useState(false);
-    const [selectedArea, setSelectedArea] = useState("");
+    const [areaFilter, setSelectedArea] = useState("");
+    const selectedArea = board?.areas.some((area) => area.id === areaFilter)
+        ? areaFilter
+        : "";
     const [statusFilter, setStatusFilter] = useState<TableFilter>("all");
     const [editor, setEditor] = useState<SeatingEditorAction | null>(null);
-    const [loadVersion, setLoadVersion] = useState(0);
     const mutationPending = useRef(false);
-
-    useEffect(() => {
-        const request = new AbortController();
-        gateway
-            .load(request.signal)
-            .then((updated) => {
-                if (request.signal.aborted) return;
-                setLoadError(null);
-                setBoard(updated);
-                setSelectedArea((id) =>
-                    updated.areas.some((area) => area.id === id) ? id : "",
-                );
-            })
-            .catch((error) => {
-                if (!request.signal.aborted)
-                    setLoadError(describeSeatingFailure(error));
-            })
-            .finally(() => {
-                if (!request.signal.aborted) setLoading(false);
-            });
-        return () => request.abort();
-    }, [gateway, loadVersion]);
-
-    function reload() {
-        setLoading(true);
-        setLoadError(null);
-        setLoadVersion((version) => version + 1);
-    }
+    const intent = useRef<{ payload: string; key: string } | null>(null);
 
     function edit(action: SeatingEditorAction) {
         setEditorError(null);
+        intent.current = null;
         setEditor(action);
     }
 
     async function apply(change: SeatingChange) {
         if (mutationPending.current) return;
         mutationPending.current = true;
-        setSaving(true);
+
         setEditorError(null);
         try {
-            await gateway.apply(change);
+            const payload = JSON.stringify(change);
+            if (intent.current?.payload !== payload)
+                intent.current = { payload, key: crypto.randomUUID() };
+            await mutation.mutateAsync({ change, key: intent.current.key });
             setEditor(null);
-            reload();
         } catch (error) {
             setEditorError(describeSeatingFailure(error));
         } finally {
             mutationPending.current = false;
-            setSaving(false);
         }
     }
 
@@ -314,28 +309,30 @@ export function SeatingBoardView({
                                 ))}
                             </select>
                         </label>
-                        <label className="flex items-center gap-2">
-                            Trạng thái
-                            <select
-                                value={statusFilter}
-                                className="h-9 rounded-md border bg-background px-2"
-                                onChange={(event) =>
-                                    setStatusFilter(
-                                        event.target.value as TableFilter,
-                                    )
-                                }
-                            >
-                                <option value="all">
-                                    Tất cả ({scopedTables.length})
-                                </option>
-                                <option value="free">
-                                    Trống ({freeCount})
-                                </option>
-                                <option value="occupied">
-                                    Đang dùng ({occupiedCount})
-                                </option>
-                            </select>
-                        </label>
+                        {canManageSessions && (
+                            <label className="flex items-center gap-2">
+                                Trạng thái
+                                <select
+                                    value={statusFilter}
+                                    className="h-9 rounded-md border bg-background px-2"
+                                    onChange={(event) =>
+                                        setStatusFilter(
+                                            event.target.value as TableFilter,
+                                        )
+                                    }
+                                >
+                                    <option value="all">
+                                        Tất cả ({scopedTables.length})
+                                    </option>
+                                    <option value="free">
+                                        Trống ({freeCount})
+                                    </option>
+                                    <option value="occupied">
+                                        Đang dùng ({occupiedCount})
+                                    </option>
+                                </select>
+                            </label>
+                        )}
                     </div>
                     {visibleAreas.length === 0 && (
                         <p className="text-sm text-muted-foreground">

@@ -1,6 +1,6 @@
 # Duy - Week 2 and 3 Frontend Handoff
 
-Date: 2026-11-19. Base: develop 223dca6. Branch:
+Date: 2026-11-19. Integrated base: develop 866e533. Branch:
 feature/duy-salesday-acceptance. Target: develop after team review.
 This handoff records local implementation; deployment and live acceptance
 must be recorded separately by the team.
@@ -18,7 +18,8 @@ must be recorded separately by the team.
 
 None of these rows is a claim of business acceptance or SQL correctness.
 Mock models do not define the backend contract. No financial backend, migration,
-auth architecture or shared restaurant store was implemented or changed.
+auth architecture or shared restaurant store was implemented by the previews.
+The develop merge retains Bao Anh's Catalog, Seating and store updates.
 
 ## Try Locally
 
@@ -35,8 +36,8 @@ npm.cmd run dev -- --hostname 127.0.0.1 --port 3016
 
 The new kitchen does not import restaurant-context. In production it shows an
 unavailable source state rather than pretending mock tickets are live. The old
-prototype kitchen route was replaced; tables/orders and other owners' pages
-were left unchanged. /dev/week-three returns 404 in production. No production
+prototype kitchen route was replaced; other owners' develop updates are retained.
+/dev/week-three returns 404 in production. No production
 payment/waiver route or navigation item was added without an API contract.
 
 All demo data remains in memory; changing tabs retains it, reloading resets it.
@@ -82,14 +83,15 @@ Even a passing smoke does not prove SQL concurrency, rollback or migration safet
 
 ## Verification
 
-- npm test: 54 unit tests passed, including six new ledger/close tests.
+- npm test: 71 unit tests passed, including six new ledger/close tests.
 - npm run build: passed, also with NEXT_PUBLIC_IDENTITY_REFRESH_ENABLED=true.
-- npm run test:e2e:production: 19 passed with mocked API (17 existing + 2
-  production boundary cases); not evidence of real staging refresh.
-- Development E2E: 14 passed. Covers desktop/mobile, dedup/reconnect, closing checklist,
+- npm run test:e2e:production: 21 passed with mocked API, including Seating
+  and production boundary cases; not evidence of real staging refresh.
+- Development E2E: 21 passed. Covers desktop/mobile, Catalog/Seating, dedup/reconnect, closing checklist,
   partial cash/transfer, waiver, PDF, panel persistence and keyboard tabs.
-- Format and generated API synchronization checked; no new dependencies added.
-- ESLint: zero errors, 35 existing warnings outside the new feature modules.
+- Format and generated API synchronization checked; previews add no dependencies.
+  The develop merge includes TanStack Query for Seating.
+- ESLint: zero errors, 25 existing warnings outside the new feature modules.
 - Staging smoke: readiness passed, authenticated read and approved write/menu
   checks skipped because no account/write authorization was supplied.
 - Screenshots generated and overflow/geometry assertions run. Image viewer
@@ -100,13 +102,14 @@ Even a passing smoke does not prove SQL concurrency, rollback or migration safet
 ## Team Handoff
 
 - Bao Anh: review new UI, /kitchen replacement and shell conventions; agree
-  where billing/closing pages belong after contracts exist. No new data-fetch
-  framework was introduced ahead of BAO-2.3.
-- Phuong: deliver Billing payment/waiver/document contracts and Catalog menu
-  endpoint. Confirm close checklist/discrepancy semantics and approve D-6.
-- Catalog endpoints exist on feature/bao-week-2-deliverables (f9a07ec), not
-  yet on this develop base. Coordinate that PR rather than copying its code
-  or treating an unauthenticated staging response as deployment evidence.
+  where billing/closing pages belong after contracts exist. Follow the merged
+  Seating adapter/query pattern when adding live adapters.
+- Phuong: deliver Billing payment/waiver/document contracts. Confirm close
+  checklist/discrepancy semantics and approve D-6.
+- Catalog and live Seating are now merged into develop. The approved menu
+  contract is GET /api/catalog/menu; set STAGING_MENU_PATH accordingly only
+  after confirming deployment. An unauthenticated response is not proof
+  that an endpoint is deployed.
 - Hieu: provide Fulfillment snapshot, event envelope/version and hub contract.
 - Hai: run approved smoke after deployment and record commit/image/test outcome.
 - Duy: replace fixtures with generated contract types/live adapters only after
