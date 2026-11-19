@@ -9,10 +9,10 @@ if [ "$#" -gt 1 ] || { [ "$mode" != --plan ] && [ "$mode" != --apply ]; } ||
    [ "$(id -u)" -ne 0 ] || [ "$(hostname)" != restaurant-staging ]; then
     echo 'Root on restaurant-staging only: --plan or --apply.' >&2; exit 2
 fi
-revision=a33acbfa52cb73407fa1742bb64f078f79f4b2a7
-release=/opt/restaurant/releases/a33acbf
-api_image=ghcr.io/trunghieu220504/restaurant-api@sha256:9a41177be9af184f7d1544752ab86d3fa9832d9db169c57d32cac7ab4d9d215d
-web_image=ghcr.io/trunghieu220504/restaurant-web@sha256:a387e7eea077ab4ba994c4cac5d2f1fadff4808e24323d8d298b43d992597ce9
+revision=f21ea4f23fe8d21730a2d48af76d1c3c37aba7f8
+release=/opt/restaurant/releases/f21ea4f
+api_image=ghcr.io/trunghieu220504/restaurant-api@sha256:e091a44c28295276a7b5b529aaaf86f092271522968d5dd6a09824004c1c22b5
+web_image=ghcr.io/trunghieu220504/restaurant-web@sha256:660e3ca743eb5894454b901d560e4c72cb15f2458b349d42ac361ef4e25d3938
 exec 9>/run/lock/restaurant-staging-deploy.lock
 flock -n 9 || { echo 'Another deployment is running.' >&2; exit 1; }
 for file in "$release" "$release/seating.sql" "$release/sales.sql"; do

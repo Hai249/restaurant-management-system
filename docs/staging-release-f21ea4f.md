@@ -1,23 +1,29 @@
-# Approved develop release a33acbf — HAI-2.5 preparation
+# Approved develop release f21ea4f — HAI-2.5 preparation
 
 This is one fixed release, **not completed automatic CD or week-three acceptance**.
-Source: merged develop `a33acbfa52cb73407fa1742bb64f078f79f4b2a7`,
-[successful build/publish](https://github.com/Trunghieu220504/restaurant-management-system/actions/runs/44440263321).
+Source: merged develop `f21ea4f23fe8d21730a2d48af76d1c3c37aba7f8`,
+[successful build/publish](https://github.com/Trunghieu220504/restaurant-management-system/actions/runs/44461323603).
 Only a member merges PRs; the agent must never merge or enable auto-merge.
 Coordination and remaining dependencies are tracked in [#70](https://github.com/Trunghieu220504/restaurant-management-system/issues/70).
+
+This supersedes the prepared `a33acbf` release: a member merged #57 into develop before deployment,
+including the Catalog wrapped-deadlock fix and its regression. The old fixed helper cannot select a
+different revision. An operator must install the replacement below; do not deploy the superseded helper.
+Seating and Sales Infrastructure are byte-for-byte unchanged between these two revisions, so the
+canonical SQL checksums remain the same. CI regenerates them from the new exact revision.
 
 ## Immutable inputs
 
 | Input | SHA256 |
 | --- | --- |
-| API image index, ghcr.io/trunghieu220504/restaurant-api | `9a41177be9af184f7d1544752ab86d3fa9832d9db169c57d32cac7ab4d9d215d` |
-| Web image index, ghcr.io/trunghieu220504/restaurant-web | `a387e7eea077ab4ba994c4cac5d2f1fadff4808e24323d8d298b43d992597ce9` |
+| API image index, ghcr.io/trunghieu220504/restaurant-api | `e091a44c28295276a7b5b529aaaf86f092271522968d5dd6a09824004c1c22b5` |
+| Web image index, ghcr.io/trunghieu220504/restaurant-web | `660e3ca743eb5894454b901d560e4c72cb15f2458b349d42ac361ef4e25d3938` |
 | seating.sql | `574e35a3dbbad08afff2e76d0ac9d8ee85a9ec2b8400df06f3350b27817c79a2` |
 | sales.sql | `458b581c151c6eafb96c92513b5b29b9d6b37f80281906b8ff1bfef2585068af` |
 
 Migrations are additive (new Seating idempotency table and initial Sales schema). Regenerate SQL
 from that exact commit, using the Infrastructure project as both project and startup project:
-`dotnet ef migrations script --idempotent --context SeatingDbContext --project src/Modules/Seating/Restaurant.Modules.Seating.Infrastructure --startup-project src/Modules/Seating/Restaurant.Modules.Seating.Infrastructure --configuration Release --output artifacts/release-a33acbf/seating.sql`.
+`dotnet ef migrations script --idempotent --context SeatingDbContext --project src/Modules/Seating/Restaurant.Modules.Seating.Infrastructure --startup-project src/Modules/Seating/Restaurant.Modules.Seating.Infrastructure --configuration Release --output artifacts/release-f21ea4f/seating.sql`.
 For Sales substitute `Sales`, `SalesDbContext` and `sales.sql`. The design-time factory requires
 `ConnectionStrings__Restaurant`; script generation can use an offline dummy local connection.
 Do not put a staging connection secret into command history.
@@ -32,12 +38,12 @@ snapshotted into root-owned mode-0700 directories; neither a mutable deploy-owne
 Compose input is used by the sudo helpers. SQL files must match the fixed checksums above.
 The runtime script only accepts this exact release and fixed service names.
 
-An operator reviews [deploy](../scripts/restaurant-deploy-a33acbf.sh),
+An operator reviews [deploy](../scripts/restaurant-deploy-f21ea4f.sh),
 [account provisioning](../scripts/restaurant-staging-create-accounts.sh) and
 [installer](../scripts/install-approved-staging-release.sh), then runs on the VPS:
 
 ```bash
-sudo bash /home/deploy/restaurant-release-a33acbf/install-approved-staging-release.sh
+sudo bash /home/deploy/restaurant-release-f21ea4f/install-approved-staging-release.sh
 ```
 
 This installs and validates the **plan only** and grants exactly two root-owned, no-argument helpers.
@@ -45,9 +51,12 @@ It does not grant a shell, arbitrary Docker access, repository write access or a
 After bootstrap the authorized agent can run:
 
 ```bash
-sudo -n /usr/local/sbin/restaurant-deploy-approved-a33acbf
-sudo -n /usr/local/sbin/restaurant-create-staging-accounts
+sudo -n /usr/local/sbin/restaurant-deploy-approved-f21ea4f
 ```
+
+The account helper was already run successfully on 19 November 2026; do not run it again.
+It deliberately rejects existing accounts instead of overwriting passwords. After deployment,
+repeat only the private login verification and the authenticated read-only browser smoke.
 
 Deployment locks against concurrent runs, creates COPY_ONLY/CHECKSUM backup and VERIFYONLY,
 restores into a unique `RestaurantReleaseVerify_...` DB without REPLACE, applies both SQL scripts
@@ -77,8 +86,17 @@ Prepared locally: locked restore/build, 5 architecture tests, 150 non-SQL tests 
 EventLog sandbox restriction), regenerated/checksummed SQL, Bash syntax checks and self-verified
 password hashes. These do not substitute actual VPS plan/restore/migration/rollback/deploy evidence.
 
-Still required: root bootstrap, live deploy, real account login/permission checks, Duy's approved
-authenticated smoke, a controlled rollback exercise, restricted SSH CD key/GitHub environment secrets,
+Verified on the live staging API at 04:56 UTC on 19 November: both dedicated accounts were inserted
+atomically after COPY_ONLY/CHECKSUM backup and VERIFYONLY. Private evidence remains at
+`/var/backups/restaurant-staging-accounts/20261119T045630Z-219825`. Both accounts passed real login,
+exact roles/permissions, secure cookie, refresh, logout and access-token revocation. The private
+credential file is now `LOGIN_VERIFIED`; no passwords, hashes, tokens or connection strings are in this PR.
+Duy's existing read-only browser tests passed separately with each account: readiness and real
+login/current SalesDay, 2/2 per account (4/4 total). The write test was not selected: no day was opened,
+closed or reset. These checks exercised the still-running `7de77d4` application, not the prepared release.
+
+Still required: replacement root bootstrap, live deploy and repeating these account/browser checks,
+a controlled rollback exercise, restricted SSH CD key/GitHub environment secrets,
 and automatic CD execution. R2 credentials/buckets and daily backup + isolated restore remain separate
 HAI-2.2/2.6 work. Financial UI is currently a mock; full HAI-3.2 depends on owners' actual Sales/Billing APIs.
-No deployment or authenticated smoke is marked PASS by creating this PR.
+Deployment and rollback are not marked PASS by these account/browser results.
