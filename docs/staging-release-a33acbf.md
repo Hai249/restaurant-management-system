@@ -66,6 +66,10 @@ an existing account. Both insertions share a SERIALIZABLE transaction after back
 There is no Admin bootstrap, role-permission expansion or SalesDay mutation.
 Passwords stay in an ignored private Windows folder and are delivered only to Hải after login/role
 checks. Generated credentials are NOT usable until provisioning and actual login have passed.
+After successful provisioning, run [account verification](../scripts/Test-StagingAccounts.ps1) with
+`-CredentialFile` pointing to that private file. It sends credentials only to the fixed HTTPS staging
+origin, checks each exact role/least-privilege permission, secure refresh cookie, refresh, logout and
+revocation, and prints no secret. Only after both checks pass does it mark the file LOGIN_VERIFIED.
 
 ## Evidence and remaining work
 
