@@ -138,7 +138,7 @@ export default function DashboardPage() {
                         Hệ thống Quản lý Nhà hàng
                     </h1>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <Button variant="outline" asChild>
                         <Link href="/sales-day">
                             <CalendarDays

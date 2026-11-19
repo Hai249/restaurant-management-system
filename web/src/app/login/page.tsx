@@ -41,7 +41,7 @@ export default function LoginPage() {
             {/* Soft Pink Background Decorative Circles from Design */}
 
             {/* Main Container */}
-            <div className="relative z-10 max-w-sm w-full mx-auto space-y-6">
+            <div className="relative z-10 mx-auto w-full max-w-sm space-y-6 sm:max-w-md sm:rounded-2xl sm:border sm:bg-card sm:p-8 sm:shadow-sm">
                 {/* Title matching design */}
                 <div className="text-center pt-4">
                     <h1 className="text-2xl font-semibold text-foreground">
