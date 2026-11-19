@@ -129,7 +129,7 @@ jobs:
           sql_run StagingSqlInputUpgrade <<'SQL'
           INSERT seating.KhuVuc (Ma,Ten,HoatDong) VALUES ('CI_PRESERVE',N'Khu thử nghiệm',1);
           SQL
-          previous_version=$(printf "SET NOCOUNT ON; SELECT CONVERT(varchar(16),Version,2) FROM seating.KhuVuc WHERE Ma='CI_PRESERVE';\n" | sql_run StagingSqlInputUpgrade | tr -d '[:space:]')
+          previous_version=$(printf "SET NOCOUNT ON; SELECT CONVERT(varchar(16),Version,2) FROM seating.KhuVuc WHERE Ma='CI_PRESERVE';\nGO\n" | sql_run StagingSqlInputUpgrade | tr -d '[:space:]')
           if ! [[ "$previous_version" =~ ^[0-9A-Fa-f]{16}$ ]]; then
             echo 'Unexpected synthetic rowversion result bytes:'
             printf '%s' "$previous_version" | od -An -tx1
