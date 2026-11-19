@@ -61,7 +61,7 @@ sql_run() {
     docker exec -i "$sql" bash -c 'export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD";
       exec /opt/mssql-tools18/bin/sqlcmd -C -I -b -r 1 -h -1 -W -s "|" -S localhost -U sa -d "$1"' _ "$target"
 }
-database_kb=$(sql_run master <<SQL
+database_kb=$(sql_run master <<SQL | tr -d '[:space:]'
 SET NOCOUNT ON;
 SELECT SUM(CONVERT(bigint,size))*8 FROM sys.master_files WHERE database_id=DB_ID(N'$database');
 SQL
