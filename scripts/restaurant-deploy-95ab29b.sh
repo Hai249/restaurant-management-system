@@ -63,7 +63,7 @@ sql_run() {
     # sqlcmd does not treat a UTF-8 BOM on stdin as file encoding metadata.
     # Strip only an initial BOM after the immutable file checksum check; retain all SQL text.
     sed '1s/^\xEF\xBB\xBF//' | docker exec -i "$sql" bash -c 'export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD";
-      exec /opt/mssql-tools18/bin/sqlcmd -f 65001 -C -I -b -r 1 -h -1 -W -s "|" -S localhost -U sa -d "$1"' _ "$target"
+      exec /opt/mssql-tools18/bin/sqlcmd -f i:65001 -C -I -b -r 1 -h -1 -W -s "|" -S localhost -U sa -d "$1"' _ "$target"
 }
 database_kb=$(sql_run master <<SQL | tr -d '[:space:]'
 SET NOCOUNT ON;

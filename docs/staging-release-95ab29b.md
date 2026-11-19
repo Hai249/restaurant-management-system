@@ -126,4 +126,33 @@ sudo bash /home/deploy/restaurant-release-95ab29b/restaurant-release-diagnose-95
 ```
 
 SQL/env payloads, the private probe environment and full container environments are never printed.
-Inspect the actual error before preparing a reviewed fix and replacing any root-owned helper.
+The operator subsequently ran this diagnosis: backup/VERIFYONLY, both image pulls and the isolated
+restore passed; `verify-seating-1.log` contains SQL Msg 102 on line 1; scratch cleanup completed with
+zero remaining scratch databases. Readiness stays Healthy and API/Web revisions remain `7de77d4`.
+
+## Correcting the SQL input transport
+
+The immutable Windows-generated SQL starts with UTF-8 BOM bytes `EF BB BF`. Passing those bytes
+directly to Linux ODBC sqlcmd standard input reproduces Msg 102; file encoding metadata is not
+handled the same way on that path. The corrected actual `sql_run` strips only the leading BOM
+and explicitly selects input code page `i:65001`. Output encoding is left unchanged so numeric
+queries and backup file-list parsing retain their prior format. Both SQL files and their checksums
+remain unchanged. See [sqlcmd encoding options](https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility).
+
+The tooling workflow now uses a disposable SQL Server 2022 Linux container and the actual
+`sql_run` function extracted from the deploy script. It requires the old BOM input to fail with
+Msg 102, applies real canonical Seating/Sales files twice on both empty and initial-Seating databases,
+asserts migration history and unchanged pre-existing row/version, runs CHECKDB, verifies the
+Vietnamese Unicode code point and checks that invalid SQL still fails. This is isolated CI evidence,
+not a successful staging deployment or proof of an image rollback drill.
+
+After these checks pass, the [bounded repair installer](../scripts/install-approved-staging-sql-fix.sh)
+copies only the SHA256-pinned deploy script into its existing root-owned path, retaining a private
+backup of the old helper. It checks the old revision, rejects concurrent deploys and runs plan only.
+It does not overwrite Compose/environment/SQL files, change sudo rules or run migration/account code:
+
+```bash
+sudo bash /home/deploy/restaurant-release-95ab29b/install-approved-staging-sql-fix.sh
+```
+
+The agent can then rerun the existing no-argument deployment helper and verify the result.
