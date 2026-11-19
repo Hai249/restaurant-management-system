@@ -129,16 +129,16 @@ jobs:
           sql_run StagingSqlInputUpgrade <<'SQL'
           INSERT seating.KhuVuc (Ma,Ten,HoatDong) VALUES ('CI_PRESERVE',N'Khu thử nghiệm',1);
           SQL
-          previous_version=$(printf "SET NOCOUNT ON; SELECT CONVERT(varchar(16),Version,2) FROM seating.KhuVuc WHERE Ma='CI_PRESERVE';\nGO\n" | sql_run StagingSqlInputUpgrade | tr -d '[:space:]')
+          previous_version=$(printf "SET NOCOUNT ON; SELECT CONVERT(varchar(16),CONVERT(binary(8),Version),2) FROM seating.KhuVuc WHERE Ma='CI_PRESERVE';\nGO\n" | sql_run StagingSqlInputUpgrade | tr -d '[:space:]')
           if ! [[ "$previous_version" =~ ^[0-9A-Fa-f]{16}$ ]]; then
             echo 'Unexpected synthetic rowversion result bytes:'
             printf '%s' "$previous_version" | od -An -tx1
             echo 'Synthetic database/row/version via direct query (no secret or staging data):'
-            docker exec "$sql" bash -c 'export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD"; exec /opt/mssql-tools18/bin/sqlcmd -C -I -b -r 1 -h -1 -W -s "|" -S localhost -U sa -d StagingSqlInputUpgrade -Q "SET NOCOUNT ON; SELECT DB_NAME(),Ma,CONVERT(varchar(16),Version,2) FROM seating.KhuVuc;"'
+            docker exec "$sql" bash -c 'export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD"; exec /opt/mssql-tools18/bin/sqlcmd -C -I -b -r 1 -h -1 -W -s "|" -S localhost -U sa -d StagingSqlInputUpgrade -Q "SET NOCOUNT ON; SELECT DB_NAME(),Ma,DATALENGTH(Version),CONVERT(varchar(16),CONVERT(binary(8),Version),2) FROM seating.KhuVuc;"'
             echo 'Same query via the actual standard-input transport:'
             sql_run StagingSqlInputUpgrade <<'SQL'
           SET NOCOUNT ON;
-          SELECT DB_NAME(),Ma,CONVERT(varchar(16),Version,2) FROM seating.KhuVuc;
+          SELECT DB_NAME(),Ma,DATALENGTH(Version),CONVERT(varchar(16),CONVERT(binary(8),Version),2) FROM seating.KhuVuc;
           GO
           SQL
             exit 1
