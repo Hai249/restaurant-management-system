@@ -95,13 +95,12 @@ cleanup() {
         docker rm -f "$probe" > "$backup/probe-cleanup.log" 2>&1 || cleanup_status=1
     fi
     if [ "$restore_started" = true ]; then
-        sql_run master <<SQL > "$backup/restore-cleanup.log" 2>&1
+        sql_run master <<SQL > "$backup/restore-cleanup.log" 2>&1 || cleanup_status=1
 IF DB_ID(N'$restore_db') IS NOT NULL BEGIN
   ALTER DATABASE [$restore_db] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
   DROP DATABASE [$restore_db];
 END;
 SQL
-        if [ "$?" -ne 0 ]; then cleanup_status=1; fi
     fi
     if [ "$cleanup_status" -ne 0 ]; then
         echo "Scratch cleanup failed; inspect private evidence: $backup" >&2
