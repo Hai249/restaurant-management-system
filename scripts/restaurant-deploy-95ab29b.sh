@@ -60,8 +60,10 @@ docker exec "$nginx" nginx -t >/dev/null 2>&1
 curl --fail --silent --show-error --connect-timeout 5 --max-time 15 https://staging.quanlynh.id.vn/health/ready >/dev/null
 sql_run() {
     local target=$1
-    docker exec -i "$sql" bash -c 'export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD";
-      exec /opt/mssql-tools18/bin/sqlcmd -C -I -b -r 1 -h -1 -W -s "|" -S localhost -U sa -d "$1"' _ "$target"
+    # sqlcmd does not treat a UTF-8 BOM on stdin as file encoding metadata.
+    # Strip only an initial BOM after the immutable file checksum check; retain all SQL text.
+    sed '1s/^\xEF\xBB\xBF//' | docker exec -i "$sql" bash -c 'export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD";
+      exec /opt/mssql-tools18/bin/sqlcmd -f 65001 -C -I -b -r 1 -h -1 -W -s "|" -S localhost -U sa -d "$1"' _ "$target"
 }
 database_kb=$(sql_run master <<SQL | tr -d '[:space:]'
 SET NOCOUNT ON;
