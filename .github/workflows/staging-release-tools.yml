@@ -1,0 +1,88 @@
+name: Staging release tooling
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'scripts/restaurant-deploy-a33acbf.sh'
+      - 'scripts/restaurant-staging-create-accounts.sh'
+      - 'scripts/install-approved-staging-release.sh'
+      - 'scripts/PrepareStagingCredentials.cs'
+      - '.github/workflows/staging-release-tools.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify fixed release inputs and guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: Trunghieu220504/restaurant-management-system
+          ref: a33acbfa52cb73407fa1742bb64f078f79f4b2a7
+          path: artifacts/release-source
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
+        with:
+          global-json-file: global.json
+      - name: Check Bash syntax and rejection of invalid commands
+        shell: bash
+        run: |
+          for file in scripts/restaurant-deploy-a33acbf.sh scripts/restaurant-staging-create-accounts.sh scripts/install-approved-staging-release.sh; do
+            bash -n "$file"
+            set +e
+            bash "$file" --unsupported
+            status=$?
+            set -e
+            test "$status" -eq 2
+          done
+      - name: ShellCheck operator helpers
+        run: |
+          if ! command -v shellcheck >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends shellcheck
+          fi
+          shellcheck scripts/restaurant-deploy-a33acbf.sh scripts/restaurant-staging-create-accounts.sh scripts/install-approved-staging-release.sh
+      - name: Restore and build exact merged release
+        working-directory: artifacts/release-source
+        run: |
+          dotnet restore RestaurantManagement.slnx --locked-mode
+          dotnet tool restore
+          dotnet build src/Host/Restaurant.Api/Restaurant.Api.csproj --configuration Release --no-restore
+      - name: Regenerate and verify immutable SQL
+        working-directory: artifacts/release-source
+        env:
+          ConnectionStrings__Restaurant: 'Server=127.0.0.1,1;Database=OfflineScriptOnly;Integrated Security=True;Encrypt=True;Connect Timeout=1'
+        run: |
+          mkdir -p artifacts/generated
+          for module in Seating Sales; do
+            project="src/Modules/$module/Restaurant.Modules.$module.Infrastructure"
+            dotnet ef migrations script --idempotent --context "${module}DbContext" --project "$project" --startup-project "$project" --configuration Release --no-build --output "artifacts/generated/$module.sql"
+          done
+          python3 - <<'PY'
+          import hashlib, pathlib
+          expected = {
+              'Seating': '574e35a3dbbad08afff2e76d0ac9d8ee85a9ec2b8400df06f3350b27817c79a2',
+              'Sales': '458b581c151c6eafb96c92513b5b29b9d6b37f80281906b8ff1bfef2585068af',
+          }
+          for module, digest in expected.items():
+              path = pathlib.Path('artifacts/generated') / (module + '.sql')
+              text = path.read_text(encoding='utf-8-sig').replace('\r\n', '\n')
+              canonical = ('\ufeff' + text.replace('\n', '\r\n')).encode('utf-8')
+              assert hashlib.sha256(canonical).hexdigest() == digest, module + ' SQL checksum differs'
+              print(module + ' canonical SQL checksum passed')
+          PY
+      - name: Verify credential generation without provisioning or logging values
+        shell: bash
+        run: |
+          umask 077
+          export STAGING_CREDENTIAL_DIRECTORY="$RUNNER_TEMP/staging-credential-selfcheck"
+          trap 'rm -f "$STAGING_CREDENTIAL_DIRECTORY/credentials.json" "$STAGING_CREDENTIAL_DIRECTORY/provisioning.json"' EXIT
+          dotnet run scripts/PrepareStagingCredentials.cs
