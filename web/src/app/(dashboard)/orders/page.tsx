@@ -2,12 +2,11 @@
 
 import { useState, useMemo, Suspense } from "react";
 import Link from "next/link";
-import {StaffOrders} from "@/features/orders/staff-orders";
-import {usePermissions} from "@/components/permission-provider";
+import { StaffOrders } from "@/features/orders/staff-orders";
+import { usePermissions } from "@/components/permission-provider";
 import { useSearchParams } from "next/navigation";
 import {
     Search,
-    Plus,
     Clock,
     CheckCircle2,
     AlertCircle,
@@ -17,11 +16,8 @@ import {
     Banknote,
     Percent,
     X,
-    ChefHat,
-    Coffee,
     Check,
     Utensils,
-    ArrowRight,
 } from "lucide-react";
 import {
     useRestaurant,
@@ -33,20 +29,17 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 function OrdersContent() {
+    const { can } = usePermissions();
     const searchParams = useSearchParams();
     const initialOrderId = searchParams.get("orderId");
 
     const {
         orders,
-        tables,
-        menuItems,
-        salesDay,
         confirmOrder,
         serveItem,
         addPayment,
         waiveOrder,
         closeOrder,
-        createOrder,
     } = useRestaurant();
 
     const [activeTab, setActiveTab] = useState<string>("ALL");
@@ -61,7 +54,6 @@ function OrdersContent() {
             return null;
         },
     );
-
 
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [waiveModalOpen, setWaiveModalOpen] = useState(false);
@@ -359,17 +351,18 @@ function OrdersContent() {
 
                                     {/* Fast Action Buttons */}
                                     <div className="flex items-center gap-2">
-                                        {order.status === "CHO_XAC_NHAN" && (
-                                            <button
-                                                onClick={() =>
-                                                    confirmOrder(order.id)
-                                                }
-                                                className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm transition-colors"
-                                            >
-                                                <Check size={14} /> Duyệt đợt
-                                                món
-                                            </button>
-                                        )}
+                                        {can("sales.batches.confirm") &&
+                                            order.status === "CHO_XAC_NHAN" && (
+                                                <button
+                                                    onClick={() =>
+                                                        confirmOrder(order.id)
+                                                    }
+                                                    className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm transition-colors"
+                                                >
+                                                    <Check size={14} /> Duyệt
+                                                    đợt món
+                                                </button>
+                                            )}
 
                                         <button
                                             onClick={() =>
@@ -585,16 +578,17 @@ function OrdersContent() {
 
                         {/* Operational Action Buttons */}
                         <div className="pt-2 border-t flex flex-wrap items-center justify-end gap-2 text-xs">
-                            {currentOrder.status === "CHO_XAC_NHAN" && (
-                                <button
-                                    onClick={() =>
-                                        confirmOrder(currentOrder.id)
-                                    }
-                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-sm"
-                                >
-                                    Xác nhận đợt gọi món
-                                </button>
-                            )}
+                            {can("sales.batches.confirm") &&
+                                currentOrder.status === "CHO_XAC_NHAN" && (
+                                    <button
+                                        onClick={() =>
+                                            confirmOrder(currentOrder.id)
+                                        }
+                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-sm"
+                                    >
+                                        Xác nhận đợt gọi món
+                                    </button>
+                                )}
 
                             {currentOrder.status !== "DA_DONG" && (
                                 <>
@@ -832,12 +826,20 @@ function OrdersContent() {
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
 
-function OrderRoute(){ const params=useSearchParams();const {can}=usePermissions();return can("sales.orders.manage")&&(params.has("orderId")||params.get("view")==="service")?<OrdersContent/>:<StaffOrders/>;}
+function OrderRoute() {
+    const params = useSearchParams();
+    const { can } = usePermissions();
+    return can("sales.orders.manage") &&
+        (params.has("orderId") || params.get("view") === "service") ? (
+        <OrdersContent />
+    ) : (
+        <StaffOrders />
+    );
+}
 export default function OrdersPage() {
     return (
         <Suspense
