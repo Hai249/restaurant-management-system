@@ -435,7 +435,7 @@ function OrdersContent() {
 
             {/* ── MODAL: CHI TIẾT ĐƠN HÀNG ───────────────────────────────────── */}
             {currentOrder && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+                <div className="fixed inset-0 z-50 flex items-center-safe justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border space-y-5 animate-in fade-in zoom-in-95 my-8">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between border-b pb-3">
@@ -881,7 +881,7 @@ function OrdersContent() {
 
             {/* ── MODAL: TẠO ĐƠN MỚI (UC07) ─────────────────────────────────── */}
             {createOrderModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+                <div className="fixed inset-0 z-50 flex items-center-safe justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border space-y-4 animate-in fade-in zoom-in-95 my-8">
                         <div className="flex items-center justify-between border-b pb-3">
                             <h3 className="text-base font-bold text-gray-900">

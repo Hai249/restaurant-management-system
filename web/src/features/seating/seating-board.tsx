@@ -296,7 +296,7 @@ function BoardContent({
                             Khu vực
                             <select
                                 value={selectedArea}
-                                className="h-9 max-w-56 rounded-md border bg-background px-2"
+                                className="h-11 w-full min-w-0 max-w-56 rounded-md border bg-background px-2"
                                 onChange={(event) =>
                                     setSelectedArea(event.target.value)
                                 }
@@ -314,7 +314,7 @@ function BoardContent({
                                 Trạng thái
                                 <select
                                     value={statusFilter}
-                                    className="h-9 rounded-md border bg-background px-2"
+                                    className="h-11 rounded-md border bg-background px-2"
                                     onChange={(event) =>
                                         setStatusFilter(
                                             event.target.value as TableFilter,
