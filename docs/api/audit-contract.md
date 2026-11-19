@@ -31,7 +31,7 @@ An independent Audit SaveChanges does not make a business operation atomic with 
 Align with Hiếu's #79 instead of creating another dispatcher:
 
 1. Sales/Billing owners persist a stable, versioned audit event in their Outbox in the business transaction.
-2. After #79 merges, a reviewed Audit consumer commits Inbox marker and NhatKy in one transaction using the shared handler. Failed/conflicting delivery must not be acknowledged as success.
+2. With #79 now merged, a reviewed Audit consumer commits Inbox marker and NhatKy in one transaction using the shared handler. Failed/conflicting delivery must not be acknowledged as success.
 3. Owners agree event/action codes and payload mapping. Action strings in tests are fixture data, not approved event names. Billing still needs its own Outbox; #79 currently supplies Sales only.
 4. Acceptance requires actual producer rollback/retry/duplicate/conflict tests and at least one sensitive Sales operation plus one Billing operation.
 
@@ -67,6 +67,6 @@ Commit [openapi.json](openapi.json) and [generated schema](../../web/src/lib/api
 
 ## Evidence and remaining acceptance
 
-Local Release: zero warnings/errors. SQL-enabled full suite: 251 integration + 5 architecture tests passed, 0 failed, 0 skipped (19 Nov), including 10 Audit SQL/API and 3 contract tests. [Detailed evidence](../evidence/week-three/audit-runtime-2026-11-19.md).
+Local Release: zero warnings/errors. SQL-enabled full suite: 278 integration + 5 architecture tests passed, 0 failed, 0 skipped (19 Nov), including 10 Audit SQL/API and 3 contract tests. [Detailed evidence](../evidence/week-three/audit-runtime-2026-11-19.md).
 
-Pending: CI, independent review/merge, shared delivery adapter after #79, owners' Sales/Billing producers, migration on isolated restored staging DB, deploy and live UI/business acceptance. No staging reset, financial operation or password reset was performed for these tests.
+Pending: CI, independent review/merge, shared delivery adapter using merged #79, owners' Sales/Billing producers, migration on isolated restored staging DB, deploy and live UI/business acceptance. No staging reset, financial operation or password reset was performed for these tests.
