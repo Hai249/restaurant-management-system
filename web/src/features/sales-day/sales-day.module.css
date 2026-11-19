@@ -55,6 +55,7 @@
     font-weight: 550;
 }
 .form > input {
+    min-height: 44px;
     padding: 10px 12px;
     min-width: 0;
     border: 1px solid #cbd0d5;
@@ -62,6 +63,7 @@
     background: white;
 }
 .form > button {
+    min-height: 44px;
     margin-top: 12px;
     width: 100%;
 }
