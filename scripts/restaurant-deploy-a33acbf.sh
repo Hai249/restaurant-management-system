@@ -135,7 +135,7 @@ RESTORE FILELISTONLY FROM DISK = N'$backup_file';
 SQL
 printf "RESTORE DATABASE [%s] FROM DISK = N'%s' WITH CHECKSUM, RECOVERY" "$restore_db" "$backup_file" > "$backup/restore.sql"
 files=0
-while IFS='|' read -r logical physical type rest; do
+while IFS='|' read -r logical _physical type _rest; do
     [ "$type" = D ] || [ "$type" = L ] || continue
     [[ "$logical" =~ ^[A-Za-z0-9_]+$ ]]
     files=$((files + 1))
