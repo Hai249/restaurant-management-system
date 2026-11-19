@@ -61,6 +61,17 @@ sql_run() {
     docker exec -i "$sql" bash -c 'export SQLCMDPASSWORD="$MSSQL_SA_PASSWORD";
       exec /opt/mssql-tools18/bin/sqlcmd -C -I -b -r 1 -h -1 -W -s "|" -S localhost -U sa -d "$1"' _ "$target"
 }
+database_kb=$(sql_run master <<SQL
+SET NOCOUNT ON;
+SELECT SUM(CONVERT(bigint,size))*8 FROM sys.master_files WHERE database_id=DB_ID(N'$database');
+SQL
+)
+[[ "$database_kb" =~ ^[0-9]+$ ]]
+volume_source=$(docker inspect "$sql" | jq -er '.[0].Mounts[] | select(.Destination == "/var/opt/mssql") | .Source')
+sql_free_kb=$(df -Pk "$volume_source" | awk 'NR == 2 {print $4}')
+host_free_kb=$(df -Pk /var/backups | awk 'NR == 2 {print $4}')
+test "$sql_free_kb" -gt "$((database_kb * 4 + 1048576))"
+test "$host_free_kb" -gt "$((database_kb + 1048576))"
 echo "Plan: deploy merged develop $revision using fixed public image digests."
 echo 'Backup CHECKSUM + VERIFYONLY; restore into a new scratch DB; apply Seating/Sales twice there; API readiness on that copy.'
 echo 'Then apply additive migrations to staging, replace API/Web only, reload Nginx, verify readiness/revisions and retain rollback state.'
@@ -77,9 +88,12 @@ restore_started=false
 images_switched=false
 cleanup() {
     local status=$?
+    local cleanup_status=0
     trap - EXIT
     set +e
-    docker rm -f "$probe" > "$backup/probe-cleanup.log" 2>&1
+    if docker inspect "$probe" >/dev/null 2>&1; then
+        docker rm -f "$probe" > "$backup/probe-cleanup.log" 2>&1 || cleanup_status=1
+    fi
     if [ "$restore_started" = true ]; then
         sql_run master <<SQL > "$backup/restore-cleanup.log" 2>&1
 IF DB_ID(N'$restore_db') IS NOT NULL BEGIN
@@ -87,6 +101,11 @@ IF DB_ID(N'$restore_db') IS NOT NULL BEGIN
   DROP DATABASE [$restore_db];
 END;
 SQL
+        if [ "$?" -ne 0 ]; then cleanup_status=1; fi
+    fi
+    if [ "$cleanup_status" -ne 0 ]; then
+        echo "Scratch cleanup failed; inspect private evidence: $backup" >&2
+        if [ "$status" -eq 0 ]; then status=2; fi
     fi
     exit "$status"
 }
@@ -184,7 +203,8 @@ done
 test "$(docker inspect -f '{{.Id}}' "$sql")" = "$sql_id"
 test "$(docker inspect -f '{{.Id}}' "$nginx")" = "$nginx_id"
 install -d -o root -g root -m 0700 /var/lib/restaurant-staging
-printf 'REVISION=%s\nGHCR_API_IMAGE=%s\nGHCR_WEB_IMAGE=%s\nBACKUP=%s\n' "$revision" "$api_image" "$web_image" "$backup" > /var/lib/restaurant-staging/release.env
+printf 'REVISION=%s\nGHCR_API_IMAGE=%s\nGHCR_WEB_IMAGE=%s\nBACKUP=%s\n' "$revision" "$api_image" "$web_image" "$backup" > /var/lib/restaurant-staging/release.env.new
+mv -f -- /var/lib/restaurant-staging/release.env.new /var/lib/restaurant-staging/release.env
 trap - ERR
 echo "Deployed $revision; backup/isolated restore/migration-twice/API probe/readiness passed."
 echo "SQL/Nginx container IDs unchanged. Private evidence: $backup"
