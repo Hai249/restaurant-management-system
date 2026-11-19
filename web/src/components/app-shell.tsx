@@ -37,10 +37,10 @@ type NavTab = {
 // 5 TABS CHÍNH THEO ĐẶC TẢ SƠ ĐỒ ĐIỀU HƯỚNG
 // Tab nào hiện là do quyền của đường dẫn trong lib/auth/route-permissions.ts.
 export const primaryTabs: readonly NavTab[] = [
-    { label: "Bàn", href: "/tables", icon: LayoutGrid, badge: "UC03" },
-    { label: "Đơn hàng", href: "/orders", icon: ReceiptText, badge: "UC07" },
-    { label: "Thực đơn", href: "/menu", icon: Boxes, badge: "UC05" },
-    { label: "Kho", href: "/inventory", icon: Package, badge: "UC22" },
+    { label: "Bàn", href: "/tables", icon: LayoutGrid },
+    { label: "Đơn hàng", href: "/orders", icon: ReceiptText },
+    { label: "Thực đơn", href: "/menu", icon: Boxes },
+    { label: "Kho", href: "/inventory", icon: Package },
     { label: "Thêm", href: "/more", icon: MoreHorizontal, badge: "Quản trị" },
 ];
 
@@ -59,17 +59,17 @@ export function AppShell({ children }: { children: ReactNode }) {
     const userInitial = displayName.charAt(0).toUpperCase();
 
     return (
-        <div className="min-h-screen bg-muted/50 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">
+        <div className="min-h-screen bg-muted/50 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:grid md:grid-cols-[12rem_minmax(0,1fr)] md:items-start md:pb-0 xl:grid-cols-[16rem_minmax(0,1fr)]">
             {sidebarOpen && (
                 <button
                     aria-label="Đóng menu"
-                    className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+                    className="fixed inset-0 z-30 bg-black/40 md:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
             <aside
                 className={cn(
-                    "fixed inset-y-0 left-0 z-50 flex w-64 max-w-[85vw] flex-col border-r bg-card lg:visible lg:translate-x-0",
+                    "fixed inset-y-0 left-0 z-50 flex w-64 max-w-[85vw] flex-col border-r bg-card md:sticky md:top-0 md:visible md:h-dvh md:w-full md:max-w-none md:translate-x-0",
                     sidebarOpen
                         ? "visible translate-x-0"
                         : "invisible -translate-x-full",
@@ -191,19 +191,16 @@ export function AppShell({ children }: { children: ReactNode }) {
                         <LogOut size={16} />
                         <span>Đăng xuất phiên làm việc</span>
                     </button>
-                    <div className="text-[11px] text-muted-foreground px-3">
-                        Restaurant OS • Clean Modular Monolith
-                    </div>
                 </div>
             </aside>
 
-            <div className="lg:pl-64">
+            <div className="min-w-0">
                 {/* Top Header */}
                 <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b bg-card/95 px-4 backdrop-blur sm:px-6">
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center gap-3">
                         <Button
                             aria-label="Mở menu"
-                            className="lg:hidden"
+                            className="md:hidden"
                             size="icon"
                             variant="ghost"
                             onClick={() => setSidebarOpen(true)}
@@ -237,12 +234,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                         </Link>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                         {/* Quick Guest QR link */}
                         {showGuestQr && (
                             <Link
                                 href="/guest?table=T04"
-                                className="hidden md:flex items-center gap-1.5 text-xs bg-rose-50 text-rose-700 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg font-bold border border-rose-200 transition-colors"
+                                className="hidden lg:flex shrink-0 items-center gap-1.5 text-xs bg-rose-50 text-rose-700 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg font-bold border border-rose-200 transition-colors"
                             >
                                 <QrCode size={14} />
                                 <span>Giao diện Khách QR</span>
@@ -251,15 +248,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
                         <Link
                             href="/profile"
-                            className="flex items-center gap-2.5 text-sm hover:opacity-80 transition-opacity"
+                            className="flex min-w-0 items-center gap-2.5 text-sm hover:opacity-80 transition-opacity"
                         >
                             <span className="hidden text-muted-foreground sm:inline text-xs">
                                 Xin chào,
                             </span>
-                            <span className="font-semibold text-gray-900 text-xs sm:text-sm">
+                            <span className="truncate font-semibold text-gray-900 text-xs sm:text-sm">
                                 {displayName}
                             </span>
-                            <span className="grid size-8 place-items-center rounded-full bg-red-100 text-red-700 font-bold text-xs">
+                            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-red-100 text-red-700 font-bold text-xs">
                                 {userInitial}
                             </span>
                         </Link>
@@ -274,7 +271,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* ── MOBILE FIXED BOTTOM NAVIGATION (THANH 5 TAB CHÍNH) ────────── */}
             <nav
                 aria-label="Thanh điều hướng đáy màn hình di động"
-                className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch justify-around gap-1 border-t border-border bg-card px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] lg:hidden"
+                className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch justify-around gap-1 border-t border-border bg-card px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:hidden"
             >
                 {visibleTabs.map(({ label, href, icon: Icon }) => {
                     const active =
