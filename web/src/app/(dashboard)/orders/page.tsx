@@ -105,13 +105,13 @@ function OrdersContent() {
             case "CHO_XAC_NHAN":
                 return (
                     <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
-                        <Clock size={12} /> Chờ xác nhận (UC06)
+                        <Clock size={12} /> Chờ xác nhận
                     </span>
                 );
             case "DANG_PHUC_VU":
                 return (
                     <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-300">
-                        <Utensils size={12} /> Đang phục vụ (UC09)
+                        <Utensils size={12} /> Đang phục vụ
                     </span>
                 );
             case "CHO_THANH_TOAN":
@@ -123,7 +123,7 @@ function OrdersContent() {
             case "DA_DONG":
                 return (
                     <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        <CheckCircle2 size={12} /> Đã hoàn tất (UC20)
+                        <CheckCircle2 size={12} /> Đã hoàn tất
                     </span>
                 );
             case "DA_HUY":
@@ -182,10 +182,6 @@ function OrdersContent() {
                         <Receipt className="size-5 text-red-500" />
                         Quản lý Đơn hàng & Thanh toán
                     </h1>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                        Theo dõi luồng: Tạo đơn (UC07) → Duyệt đợt (UC09) → Giao
-                        món (UC15) → Thu tiền (UC17) → Đóng đơn trả bàn (UC20)
-                    </p>
                 </div>
                 <Link href="/orders">Gọi món và xem các đợt</Link>
             </div>
@@ -371,7 +367,7 @@ function OrdersContent() {
                                                 className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm transition-colors"
                                             >
                                                 <Check size={14} /> Duyệt đợt
-                                                món (UC09)
+                                                món
                                             </button>
                                         )}
 
@@ -393,7 +389,7 @@ function OrdersContent() {
 
             {/* ── MODAL: CHI TIẾT ĐƠN HÀNG ───────────────────────────────────── */}
             {currentOrder && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+                <div className="fixed inset-0 z-50 flex items-center-safe justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border space-y-5 animate-in fade-in zoom-in-95 my-8">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between border-b pb-3">
@@ -502,7 +498,7 @@ function OrdersContent() {
                                                     }
                                                     className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold transition-colors"
                                                 >
-                                                    Bưng bàn (UC15)
+                                                    Bưng bàn
                                                 </button>
                                             )}
                                         </div>
@@ -528,7 +524,7 @@ function OrdersContent() {
                                     {currentOrder.payments.length > 0 && (
                                         <div className="space-y-1">
                                             <span className="font-semibold text-gray-600">
-                                                Chứng từ đã thu (UC17):
+                                                Chứng từ đã thu:
                                             </span>
                                             {currentOrder.payments.map((p) => (
                                                 <div
@@ -596,7 +592,7 @@ function OrdersContent() {
                                     }
                                     className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-sm"
                                 >
-                                    Xác nhận đợt gọi món (UC09)
+                                    Xác nhận đợt gọi món
                                 </button>
                             )}
 
@@ -619,7 +615,7 @@ function OrdersContent() {
                                             size={14}
                                             className="inline mr-1"
                                         />
-                                        Miễn thu (UC19)
+                                        Miễn thu
                                     </button>
 
                                     <button
@@ -629,7 +625,7 @@ function OrdersContent() {
                                         className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
                                     >
                                         <Banknote size={15} />
-                                        Thu tiền (UC17)
+                                        Thu tiền
                                     </button>
 
                                     <button
@@ -642,7 +638,7 @@ function OrdersContent() {
                                         className="px-4 py-2 bg-gray-900 hover:bg-black text-white font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
                                     >
                                         <CheckCircle2 size={15} />
-                                        Đóng đơn & Giải phóng bàn (UC20)
+                                        Đóng đơn & Giải phóng bàn
                                     </button>
                                 </>
                             )}
@@ -773,7 +769,7 @@ function OrdersContent() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 animate-in fade-in zoom-in-95">
                         <h3 className="text-base font-bold text-gray-900">
-                            Quản lý duyệt miễn thu {currentOrder.id} (UC19)
+                            Quản lý duyệt miễn thu {currentOrder.id}
                         </h3>
                         <p className="text-xs text-gray-500">
                             Chỉ Quản lý được phép miễn thu phần nghĩa vụ thanh

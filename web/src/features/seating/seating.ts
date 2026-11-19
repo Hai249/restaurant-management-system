@@ -2,7 +2,7 @@ type CatalogEntry = {
     id: string;
     code: string;
     name: string;
-    version: string;
+    version?: string;
 };
 
 export type SeatingArea = CatalogEntry;
@@ -10,7 +10,7 @@ export type SeatingArea = CatalogEntry;
 export type SeatingSession = {
     id: string;
     openedAt: string;
-    version: string;
+    version?: string;
 };
 
 export type SeatingTable = CatalogEntry & {
@@ -24,7 +24,7 @@ export type SeatingBoard = {
 };
 
 type CatalogInput = { code: string; name: string };
-type EntityRef = { id: string; version: string };
+type EntityRef = { id: string; version?: string };
 
 export type SeatingChange =
     | { kind: "saveArea"; input: CatalogInput; existing?: EntityRef }
@@ -43,14 +43,20 @@ export type SeatingChange =
           reason: string;
       };
 
-// UI data model. The HIE-2.1 adapter will translate API responses into it.
+// Shared by the authenticated API and the development preview.
 export interface SeatingGateway {
     load(signal: AbortSignal): Promise<SeatingBoard>;
-    apply(change: SeatingChange): Promise<void>;
+    apply(change: SeatingChange, key: string): Promise<void>;
 }
 
 // The gateway maps backend problem codes to these UI reasons.
 const messages = {
+    invalidResponse: "Dữ liệu bàn trả về không hợp lệ.",
+    signedOut: "Phiên đăng nhập đã hết hạn.",
+    forbidden: "Tài khoản chưa có quyền thực hiện thao tác này.",
+    openOrders: "Cần đóng các order của bàn trước khi đóng phiên.",
+    dayClosed: "Cần mở ngày bán trước khi thao tác phiên bàn.",
+    unavailable: "Không thể kết nối dịch vụ bàn. Vui lòng tải lại.",
     duplicateCode: "Mã đã được sử dụng. Vui lòng nhập mã khác.",
     invalidInput: "Kiểm tra lại các trường bắt buộc và độ dài nội dung.",
     areaHasTables: "Hãy chuyển hoặc lưu trữ các bàn trong khu vực trước.",

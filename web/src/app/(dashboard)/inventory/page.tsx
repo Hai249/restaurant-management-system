@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useRestaurant } from "@/lib/store/restaurant-context";
 
 interface Ingredient {
     id: string;
@@ -84,7 +83,6 @@ const initialIngredients: Ingredient[] = [
 ];
 
 export default function InventoryPage() {
-    const { salesDay } = useRestaurant();
     const [activeTab, setActiveTab] = useState<
         "STOCK" | "IMPORT" | "COUNT" | "ADJUST"
     >("STOCK");
@@ -122,7 +120,7 @@ export default function InventoryPage() {
             ),
         );
         toast.success(
-            `Đã tạo phiếu nhập kho: +${importQty} cho ${selectedIngredient} (UC22).`,
+            `Đã tạo phiếu nhập kho: +${importQty} cho ${selectedIngredient}.`,
         );
         setImportModalOpen(false);
     };
@@ -137,8 +135,7 @@ export default function InventoryPage() {
                         Tab 4: Quản lý Kho nguyên liệu (Inventory)
                     </h1>
                     <p className="text-xs text-gray-500 mt-0.5">
-                        Phiếu nhập kho (UC22) • Số đếm tồn cuối ngày (UC23) •
-                        Điều chỉnh tồn (UC24)
+                        Phiếu nhập kho • Số đếm tồn cuối ngày • Điều chỉnh tồn
                     </p>
                 </div>
 
@@ -146,7 +143,7 @@ export default function InventoryPage() {
                     onClick={() => setImportModalOpen(true)}
                     className="flex items-center justify-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-sm transition-colors"
                 >
-                    <Plus size={16} /> + Lập phiếu nhập kho (UC22)
+                    <Plus size={16} /> + Lập phiếu nhập kho
                 </button>
             </div>
 
@@ -157,9 +154,9 @@ export default function InventoryPage() {
                         key: "STOCK",
                         label: `Tồn kho nguyên liệu (${ingredients.length})`,
                     },
-                    { key: "IMPORT", label: "Phiếu nhập hàng (UC22)" },
-                    { key: "COUNT", label: "Số đếm tồn cuối ngày (UC23)" },
-                    { key: "ADJUST", label: "Điều chỉnh tồn (UC24)" },
+                    { key: "IMPORT", label: "Phiếu nhập hàng" },
+                    { key: "COUNT", label: "Số đếm tồn cuối ngày" },
+                    { key: "ADJUST", label: "Điều chỉnh tồn" },
                 ].map((tab) => (
                     <button
                         key={tab.key}
@@ -217,7 +214,12 @@ export default function InventoryPage() {
 
             {/* Tab Content: Stock List */}
             {activeTab === "STOCK" && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div
+                    className="table-scroll rounded-lg border bg-card"
+                    role="region"
+                    aria-label="Tồn kho"
+                    tabIndex={0}
+                >
                     <table className="w-full text-xs">
                         <thead>
                             <tr className="bg-gray-50 border-b text-gray-500 font-semibold text-left">
@@ -326,13 +328,8 @@ export default function InventoryPage() {
             {activeTab === "COUNT" && (
                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-3 text-xs">
                     <h3 className="font-bold text-gray-900 text-sm">
-                        Nhập số đếm tồn cuối ngày (UC23)
+                        Nhập số đếm tồn cuối ngày
                     </h3>
-                    <p className="text-gray-500">
-                        Theo quy trình UC23: Nhân viên / Bếp / Bar nhập số đếm
-                        nháp thực tế cuối ngày bán, Quản lý xem và duyệt để tính
-                        giá vốn.
-                    </p>
                     <div className="space-y-2 pt-2">
                         {ingredients.slice(0, 3).map((item) => (
                             <div
@@ -360,12 +357,12 @@ export default function InventoryPage() {
                     <button
                         onClick={() =>
                             toast.success(
-                                "Quản lý đã duyệt số đếm tồn cuối ngày thành công (UC23).",
+                                "Quản lý đã duyệt số đếm tồn cuối ngày thành công.",
                             )
                         }
                         className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm"
                     >
-                        Duyệt số đếm kiểm kê (UC23)
+                        Duyệt số đếm kiểm kê
                     </button>
                 </div>
             )}
@@ -374,7 +371,7 @@ export default function InventoryPage() {
             {activeTab === "ADJUST" && (
                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-3 text-xs">
                     <h3 className="font-bold text-gray-900 text-sm">
-                        Điều chỉnh tồn kho ở ngày hiện tại (UC24)
+                        Điều chỉnh tồn kho ở ngày hiện tại
                     </h3>
                     <p className="text-gray-500">
                         Dành cho Quản lý điều chỉnh sai số hao hụt, hỏng hóc
@@ -406,12 +403,12 @@ export default function InventoryPage() {
                         <button
                             onClick={() =>
                                 toast.success(
-                                    "Đã ghi nhận phiếu điều chỉnh tồn kho (UC24).",
+                                    "Đã ghi nhận phiếu điều chỉnh tồn kho.",
                                 )
                             }
                             className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-sm"
                         >
-                            Xác nhận điều chỉnh (UC24)
+                            Xác nhận điều chỉnh
                         </button>
                     </div>
                 </div>
@@ -422,7 +419,7 @@ export default function InventoryPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 animate-in fade-in zoom-in-95 text-xs">
                         <h3 className="text-base font-bold text-gray-900">
-                            Lập phiếu nhập kho (UC22)
+                            Lập phiếu nhập kho
                         </h3>
                         <form
                             onSubmit={handleCreateImport}
