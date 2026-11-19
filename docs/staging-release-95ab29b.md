@@ -1,29 +1,30 @@
-# Approved develop release f21ea4f — HAI-2.5 preparation
+# Approved develop release 95ab29b — HAI-2.5 preparation
 
 This is one fixed release, **not completed automatic CD or week-three acceptance**.
-Source: merged develop `f21ea4f23fe8d21730a2d48af76d1c3c37aba7f8`,
-[successful build/publish](https://github.com/Trunghieu220504/restaurant-management-system/actions/runs/44461323603).
+Source: merged develop `95ab29baa09949f88dd09d106de0834108e97670`,
+[successful build/publish](https://github.com/Trunghieu220504/restaurant-management-system/actions/runs/44462379960).
 Only a member merges PRs; the agent must never merge or enable auto-merge.
 Coordination and remaining dependencies are tracked in [#70](https://github.com/Trunghieu220504/restaurant-management-system/issues/70).
 
-This supersedes the prepared `a33acbf` release: a member merged #57 into develop before deployment,
-including the Catalog wrapped-deadlock fix and its regression. The old fixed helper cannot select a
-different revision. An operator must install the replacement below; do not deploy the superseded helper.
-Seating and Sales Infrastructure are byte-for-byte unchanged between these two revisions, so the
+This supersedes the prepared `a33acbf` release: Trung Hieu merged #57, #68 and #69 into develop before
+deployment, including the Catalog wrapped-deadlock fix/regression and week-one QA tooling. This
+release is frozen at the successful merged build above. The old fixed helper cannot select another
+revision. An operator must install the replacement below; do not deploy the superseded helper.
+Seating and Sales Infrastructure are byte-for-byte unchanged from `a33acbf`, so the
 canonical SQL checksums remain the same. CI regenerates them from the new exact revision.
 
 ## Immutable inputs
 
 | Input | SHA256 |
 | --- | --- |
-| API image index, ghcr.io/trunghieu220504/restaurant-api | `e091a44c28295276a7b5b529aaaf86f092271522968d5dd6a09824004c1c22b5` |
-| Web image index, ghcr.io/trunghieu220504/restaurant-web | `660e3ca743eb5894454b901d560e4c72cb15f2458b349d42ac361ef4e25d3938` |
+| API image index, ghcr.io/trunghieu220504/restaurant-api | `eb136dfcb81fbbaa23bafbc524e0bb7d776bed3eef260e6b64fb8f80915376b5` |
+| Web image index, ghcr.io/trunghieu220504/restaurant-web | `1f61ddcf33491a616c288eff1fabfaf15102e89701cc4271977def3eada3dd44` |
 | seating.sql | `574e35a3dbbad08afff2e76d0ac9d8ee85a9ec2b8400df06f3350b27817c79a2` |
 | sales.sql | `458b581c151c6eafb96c92513b5b29b9d6b37f80281906b8ff1bfef2585068af` |
 
 Migrations are additive (new Seating idempotency table and initial Sales schema). Regenerate SQL
 from that exact commit, using the Infrastructure project as both project and startup project:
-`dotnet ef migrations script --idempotent --context SeatingDbContext --project src/Modules/Seating/Restaurant.Modules.Seating.Infrastructure --startup-project src/Modules/Seating/Restaurant.Modules.Seating.Infrastructure --configuration Release --output artifacts/release-f21ea4f/seating.sql`.
+`dotnet ef migrations script --idempotent --context SeatingDbContext --project src/Modules/Seating/Restaurant.Modules.Seating.Infrastructure --startup-project src/Modules/Seating/Restaurant.Modules.Seating.Infrastructure --configuration Release --output artifacts/release-95ab29b/seating.sql`.
 For Sales substitute `Sales`, `SalesDbContext` and `sales.sql`. The design-time factory requires
 `ConnectionStrings__Restaurant`; script generation can use an offline dummy local connection.
 Do not put a staging connection secret into command history.
@@ -38,12 +39,12 @@ snapshotted into root-owned mode-0700 directories; neither a mutable deploy-owne
 Compose input is used by the sudo helpers. SQL files must match the fixed checksums above.
 The runtime script only accepts this exact release and fixed service names.
 
-An operator reviews [deploy](../scripts/restaurant-deploy-f21ea4f.sh),
+An operator reviews [deploy](../scripts/restaurant-deploy-95ab29b.sh),
 [account provisioning](../scripts/restaurant-staging-create-accounts.sh) and
 [installer](../scripts/install-approved-staging-release.sh), then runs on the VPS:
 
 ```bash
-sudo bash /home/deploy/restaurant-release-f21ea4f/install-approved-staging-release.sh
+sudo bash /home/deploy/restaurant-release-95ab29b/install-approved-staging-release.sh
 ```
 
 This installs and validates the **plan only** and grants exactly two root-owned, no-argument helpers.
@@ -51,7 +52,7 @@ It does not grant a shell, arbitrary Docker access, repository write access or a
 After bootstrap the authorized agent can run:
 
 ```bash
-sudo -n /usr/local/sbin/restaurant-deploy-approved-f21ea4f
+sudo -n /usr/local/sbin/restaurant-deploy-approved-95ab29b
 ```
 
 The account helper was already run successfully on 19 November 2026; do not run it again.

@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [develop, main]
     paths:
-      - 'scripts/restaurant-deploy-f21ea4f.sh'
+      - 'scripts/restaurant-deploy-95ab29b.sh'
       - 'scripts/restaurant-staging-create-accounts.sh'
       - 'scripts/install-approved-staging-release.sh'
       - 'scripts/PrepareStagingCredentials.cs'
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: Trunghieu220504/restaurant-management-system
-          ref: f21ea4f23fe8d21730a2d48af76d1c3c37aba7f8
+          ref: 95ab29baa09949f88dd09d106de0834108e97670
           path: artifacts/release-source
           persist-credentials: false
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
@@ -36,7 +36,7 @@ jobs:
       - name: Check Bash syntax and rejection of invalid commands
         shell: bash
         run: |
-          for file in scripts/restaurant-deploy-f21ea4f.sh scripts/restaurant-staging-create-accounts.sh scripts/install-approved-staging-release.sh; do
+          for file in scripts/restaurant-deploy-95ab29b.sh scripts/restaurant-staging-create-accounts.sh scripts/install-approved-staging-release.sh; do
             bash -n "$file"
             set +e
             bash "$file" --unsupported
@@ -50,7 +50,7 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -y --no-install-recommends shellcheck
           fi
-          shellcheck scripts/restaurant-deploy-f21ea4f.sh scripts/restaurant-staging-create-accounts.sh scripts/install-approved-staging-release.sh
+          shellcheck scripts/restaurant-deploy-95ab29b.sh scripts/restaurant-staging-create-accounts.sh scripts/install-approved-staging-release.sh
       - name: Check PowerShell verification syntax
         shell: pwsh
         run: |
