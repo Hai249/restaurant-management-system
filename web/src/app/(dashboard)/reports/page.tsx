@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Menu, TrendingUp } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRestaurant } from "@/lib/store/restaurant-context";
 
@@ -45,11 +45,12 @@ export default function ReportsPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="space-y-4">
             {/* Header */}
-            <div className="bg-white flex items-center justify-between px-4 py-3 shadow-sm sticky top-0 z-10">
+            <div className="flex items-center gap-3 rounded-xl border bg-white px-4 py-3 md:[&>h1]:text-2xl">
                 <button
                     onClick={() => router.back()}
+                    aria-label="Quay lại"
                     className="p-1 text-gray-600 hover:bg-gray-100 rounded-lg"
                 >
                     <ArrowLeft size={22} />
@@ -57,12 +58,9 @@ export default function ReportsPage() {
                 <h1 className="text-lg font-semibold text-gray-800">
                     Báo cáo KD (UC28)
                 </h1>
-                <button className="p-1 text-gray-600 hover:bg-gray-100 rounded-lg">
-                    <Menu size={22} />
-                </button>
             </div>
 
-            <div className="flex-1 p-4 space-y-4 max-w-4xl mx-auto w-full">
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(15rem,2fr)]">
                 {/* Bar Chart */}
                 <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
                     <div className="flex">
@@ -165,7 +163,7 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Detailed Table */}
-                <div className="min-w-0 rounded-lg border bg-card">
+                <div className="min-w-0 rounded-lg border bg-card lg:col-span-2">
                     <div className="p-3 border-b bg-gray-50 flex items-center justify-between">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">
                             Bảng kê doanh thu theo ngày
@@ -231,13 +229,6 @@ export default function ReportsPage() {
                             </tbody>
                         </table>
                     </div>
-                </div>
-
-                {/* Pagination dots */}
-                <div className="flex justify-center space-x-2 py-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block" />
                 </div>
             </div>
         </div>
