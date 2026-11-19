@@ -215,7 +215,12 @@ export default function InventoryPage() {
 
             {/* Tab Content: Stock List */}
             {activeTab === "STOCK" && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div
+                    className="table-scroll rounded-lg border bg-card"
+                    role="region"
+                    aria-label="Tồn kho"
+                    tabIndex={0}
+                >
                     <table className="w-full text-xs">
                         <thead>
                             <tr className="bg-gray-50 border-b text-gray-500 font-semibold text-left">

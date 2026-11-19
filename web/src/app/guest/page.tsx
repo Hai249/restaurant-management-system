@@ -311,7 +311,7 @@ function GuestMenuContent() {
             )}
 
             {/* Category Pills */}
-            <div className="sticky top-[61px] z-20 bg-white px-4 py-2.5 border-b border-slate-100 flex items-center gap-2 overflow-x-auto">
+            <div className="sticky top-[61px] z-20 flex items-center gap-2 overflow-x-auto border-b bg-card px-4 py-2.5 [&>button]:min-h-11 [&>button]:shrink-0">
                 {categories.map((cat) => (
                     <button
                         key={cat.key}
