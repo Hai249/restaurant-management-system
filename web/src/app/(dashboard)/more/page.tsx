@@ -78,7 +78,7 @@ export default function MorePage() {
         .filter((section) => section.items.length > 0);
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col space-y-4 pb-24">
+        <div className="space-y-4">
             {/* Header */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -107,7 +107,7 @@ export default function MorePage() {
             </div>
 
             {/* Navigation Sections */}
-            <div className="space-y-4">
+            <div className="grid items-start gap-4 lg:grid-cols-2">
                 {menuSections.map((sec) => (
                     <div
                         key={sec.title}
@@ -158,7 +158,7 @@ export default function MorePage() {
             <div className="pt-2">
                 <button
                     onClick={() => logout()}
-                    className="w-full py-3 bg-white hover:bg-red-50 text-red-600 font-bold text-sm rounded-xl border border-red-200 shadow-sm flex items-center justify-center gap-2 transition-colors"
+                    className="w-full py-3 md:w-auto md:px-5 bg-white hover:bg-red-50 text-red-600 font-bold text-sm rounded-xl border border-red-200 shadow-sm flex items-center justify-center gap-2 transition-colors"
                 >
                     <LogOut size={16} />
                     <span>Đăng xuất tài khoản</span>
