@@ -96,8 +96,34 @@ Duy's existing read-only browser tests passed separately with each account: read
 login/current SalesDay, 2/2 per account (4/4 total). The write test was not selected: no day was opened,
 closed or reset. These checks exercised the still-running `7de77d4` application, not the prepared release.
 
-Still required: replacement root bootstrap, live deploy and repeating these account/browser checks,
+Still required: diagnosing the failed live deploy, completing deployment and repeating account/browser checks,
 a controlled rollback exercise, restricted SSH CD key/GitHub environment secrets,
 and automatic CD execution. R2 credentials/buckets and daily backup + isolated restore remain separate
 HAI-2.2/2.6 work. Financial UI is currently a mock; full HAI-3.2 depends on owners' actual Sales/Billing APIs.
 Deployment and rollback are not marked PASS by these account/browser results.
+
+## First live deployment attempt
+
+The operator installed the fixed `95ab29b` root helper, then the agent invoked it once. The attempt
+at `20261119T051605Z-220913` exited 1 without a successful deploy result. A subsequent independent
+read-only audit confirms API/Web remain on `7de77d4`, all four services are running, internal service
+ports remain unpublished, and public readiness returns 200/Healthy. No success or rollback drill is claimed.
+
+The detailed failure logs are root-only. The `deploy` user has no approved read-log command, and
+an inherited ERR trap inside a redirected function can send the failure message into the private
+log as well. The source now preserves the original error stream on descriptor 8 and reports a
+fixed phase label; it never prints the shell command, environment or SQL credentials. This improves
+failure reporting but is not a claim that the underlying deploy failure is fixed. The installed
+root-owned helper is unchanged until an operator installs a reviewed correction. The precise
+failing phase/cause is not yet known; do not guess or rerun deployment.
+The prepared [read-only diagnosis](../scripts/restaurant-release-diagnose-95ab29b.sh) reads only a
+fixed allowlist of logs from this exact attempt, filters secret-bearing lines, reports current
+revisions and scratch-database count, and checks readiness. It performs no database/account write,
+deployment, repair or privilege change. Run it in the operator's SSH session and return its output:
+
+```bash
+sudo bash /home/deploy/restaurant-release-95ab29b/restaurant-release-diagnose-95ab29b.sh
+```
+
+SQL/env payloads, the private probe environment and full container environments are never printed.
+Inspect the actual error before preparing a reviewed fix and replacing any root-owned helper.

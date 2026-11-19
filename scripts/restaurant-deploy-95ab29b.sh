@@ -4,6 +4,8 @@ set -Eeuo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export LC_ALL=C
 umask 077
+# Preserve the operator error stream when a failing SQL function redirects its logs.
+exec 8>&2
 mode=${1:---plan}
 if [ "$#" -gt 1 ] || { [ "$mode" != --plan ] && [ "$mode" != --apply ]; } ||
    [ "$(id -u)" -ne 0 ] || [ "$(hostname)" != restaurant-staging ]; then
@@ -86,6 +88,7 @@ restore_db=RestaurantReleaseVerify_$(date -u +%Y%m%d%H%M%S)_$$
 probe=restaurant-release-probe-$stamp
 restore_started=false
 images_switched=false
+stage=backup-and-verify
 cleanup() {
     local status=$?
     local cleanup_status=0
@@ -103,7 +106,7 @@ END;
 SQL
     fi
     if [ "$cleanup_status" -ne 0 ]; then
-        echo "Scratch cleanup failed; inspect private evidence: $backup" >&2
+        echo "Scratch cleanup failed; inspect private evidence: $backup" >&8
         if [ "$status" -eq 0 ]; then status=2; fi
     fi
     exit "$status"
@@ -120,15 +123,15 @@ rollback_on_error() {
            docker exec "$nginx" nginx -s reload >> "$backup/rollback.log" 2>&1; then
             for attempt in $(seq 1 30); do
                 if curl --fail --silent --connect-timeout 3 --max-time 5 https://staging.quanlynh.id.vn/health/ready >/dev/null; then
-                    echo 'Deployment failed; previous API/Web images restored and readiness passed. Schema retained.' >&2
+                    echo "Deployment failed during $stage; previous API/Web images restored and readiness passed. Schema retained." >&8
                     exit "$status"
                 fi
                 sleep 2
             done
         fi
-        echo "Deployment and rollback readiness failed. Inspect private logs: $backup" >&2
+        echo "Deployment failed during $stage and rollback readiness failed. Inspect private logs: $backup" >&8
     else
-        echo "Stopped before switching API/Web. Inspect private logs: $backup" >&2
+        echo "Stopped during $stage before switching API/Web. Inspect private logs: $backup" >&8
     fi
     exit "$status"
 }
@@ -141,11 +144,13 @@ SQL
 docker cp "$sql:$backup_file" "$backup/database.bak" >/dev/null 2>&1
 chmod 0600 "$backup/database.bak"
 sha256sum "$backup/database.bak" > "$backup/database.sha256"
+stage=pull-and-verify-images
 docker pull "$api_image" > "$backup/pull-api.log" 2>&1
 docker pull "$web_image" > "$backup/pull-web.log" 2>&1
 for image in "$api_image" "$web_image"; do
     test "$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")" = "$revision"
 done
+stage=read-backup-filelist
 sql_run master <<SQL > "$backup/filelist" 2>&1
 SET NOCOUNT ON;
 IF DB_ID(N'$restore_db') IS NOT NULL THROW 51000, 'Scratch database collision', 1;
@@ -162,15 +167,20 @@ done < "$backup/filelist"
 test "$files" -ge 2
 printf ';\n' >> "$backup/restore.sql"
 restore_started=true
+stage=restore-isolated-copy
 sql_run master < "$backup/restore.sql" > "$backup/restore.log" 2>&1
 for attempt in 1 2; do
+    stage=verify-seating-$attempt
     sql_run "$restore_db" < "$release/seating.sql" > "$backup/verify-seating-$attempt.log" 2>&1
+    stage=verify-sales-$attempt
     sql_run "$restore_db" < "$release/sales.sql" > "$backup/verify-sales-$attempt.log" 2>&1
 done
+stage=check-isolated-copy
 sql_run "$restore_db" <<SQL > "$backup/check-copy.log" 2>&1
 IF OBJECT_ID(N'seating.YeuCauDaXuLy') IS NULL OR OBJECT_ID(N'sales.DonHang') IS NULL THROW 51000, 'Migration objects missing', 1;
 DBCC CHECKDB ([$restore_db]) WITH NO_INFOMSGS;
 SQL
+stage=api-probe-on-copy
 docker inspect "$api" | jq -r --arg db "$restore_db" '
   .[0].Config.Env[] | if startswith("ConnectionStrings__Restaurant=") then
   sub("(?i)(Database|Initial Catalog)=[^;]+"; "Database=" + $db) else . end' > "$backup/probe.env"
@@ -183,10 +193,13 @@ done
 test "$ready" = true
 docker rm -f "$probe" >/dev/null
 for file in seating sales; do
+    stage=apply-$file
     sql_run "$database" < "$release/$file.sql" > "$backup/apply-$file.log" 2>&1
 done
+stage=replace-api-web
 images_switched=true
 "${compose[@]}" up -d --no-deps --no-build --pull never api web > "$backup/deploy.log" 2>&1
+stage=reload-nginx-and-verify-public-readiness
 docker exec "$nginx" nginx -t > "$backup/nginx.log" 2>&1
 docker exec "$nginx" nginx -s reload >> "$backup/nginx.log" 2>&1
 ready=false
@@ -201,6 +214,7 @@ for container in "$api" "$web"; do
 done
 test "$(docker inspect -f '{{.Id}}' "$sql")" = "$sql_id"
 test "$(docker inspect -f '{{.Id}}' "$nginx")" = "$nginx_id"
+stage=record-release-state
 install -d -o root -g root -m 0700 /var/lib/restaurant-staging
 printf 'REVISION=%s\nGHCR_API_IMAGE=%s\nGHCR_WEB_IMAGE=%s\nBACKUP=%s\n' "$revision" "$api_image" "$web_image" "$backup" > /var/lib/restaurant-staging/release.env.new
 mv -f -- /var/lib/restaurant-staging/release.env.new /var/lib/restaurant-staging/release.env
