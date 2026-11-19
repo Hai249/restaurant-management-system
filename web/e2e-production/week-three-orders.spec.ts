@@ -121,8 +121,13 @@ test("staff builds batches with a topping, reviews a price change and handles ta
     await page.getByLabel("Điện thoại").fill("0901234567");
     await page.getByLabel("Giờ nhận").fill("2026-11-27T18:00");
     await send.click();
+    const takeaway = page.getByRole("article").filter({
+        has: page.getByRole("heading", { name: /Mang về · An/ }),
+    });
+    const pickupDetails = takeaway.getByText(/0901234567.*18:00/);
+    await expect(pickupDetails).toBeVisible();
     await page.reload();
-    await expect(page.getByText(/0901234567.*18:00/)).toBeVisible();
+    await expect(pickupDetails).toBeVisible();
 });
 test("public QR at 360px keeps a private draft and sends no orders", async ({
     page,
